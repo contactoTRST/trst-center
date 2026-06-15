@@ -16,7 +16,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ─── LAYER 1: C2PA Provenance ────────────────────────────────────────────────
 async function checkC2PA(filePath) {
-  return { found: false, valid: false, issuer: null, detail: "No C2PA provenance certificate found" };
+  return { found: false, valid: false, issuer: null, risk: "not_found", detail: "No C2PA provenance certificate found" };
 }
 
 // ─── LAYER 2: Metadata Forensics ────────────────────────────────────────────
@@ -34,27 +34,27 @@ async function checkMetadata(filePath) {
     const fieldCount = Object.keys(data).length;
     if (fieldCount < 5) { flags.push("EXIF data appears stripped or minimal"); }
     const risk = flags.length >= 2 ? "high" : flags.length === 1 ? "medium" : "low";
-    return { risk, flags, info, fieldCount, detail: flags.length ? flags.join(". ") : "Metadata appears intact" };
+    return { risk, active: true, flags, info, fieldCount, detail: flags.length ? flags.join(". ") : "Metadata appears intact" };
   } catch (e) {
-    return { risk: "medium", flags: ["Could not read metadata"], info: {}, detail: "Metadata extraction failed" };
+    return { risk: "medium", active: true, flags: ["Could not read metadata"], info: {}, detail: "Metadata extraction failed" };
   }
 }
 
 // ─── LAYER 3: Origin Tracing
 async function checkOrigin() {
-  return { risk: "unknown", earliest_source: null, sources_found: 0, detail: "Origin tracing not yet configured" };
+  return { risk: "not_configured", active: false, earliest_source: null, sources_found: 0, detail: "Origin tracing not yet configured" };
 }
 
 // ─── LAYER 4: AI Detection
 async function checkDetection(filePath) {
-  const results = { sightengine: { skipped: true, reason: "No API credentials configured" }, hive: { skipped: true, reason: "No API credentials configured" } };
-  return { risk: "unknown", results, avgScore: null, detail: "Detection APIs not yet configured" };
+  const results = { sightengine: { skipped: true }, hive: { skipped: true } };
+  return { risk: "not_configured", active: false, results, avgScore: null, detail: "Detection APIs not yet configured" };
 }
 
 // ─── LAYER 5: LLM Consensus
 async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return { risk: "unknown", verdict: null, reasoning: null, detail: "ANTHROPIC_API_KEY not set" };
+    return { risk: "not_configured", active: false, verdict: null, reasoning: null, detail: "ANTHROPIC_API_KEY not set" };
   }
   try {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
@@ -66,37 +66,48 @@ async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
     const ext = path.extname(filePath).toLowerCase().replace(".", "");
     const mediaType = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "png" ? "image/png" : "image/jpeg";
     const evidence = `Metadata: ${metadataResult.detail} (${metadataResult.risk} risk). Detection: ${detectionResult.detail}.`;
-    const prompt = `You are a forensic media authenticity analyst. Analyze this image for signs of AI generation or manipulation.\nEvidence from other layers: ${evidence}\nRespond in JSON: {"verdict": "authentic"|likely_authentic|uncertain|likely_synthetic|synthetic","confidence":0-100,"flags":[],"reasoning":"2-3 sentences"}`;
+    const prompt = `You are a forensic media authenticity analyst. Analyze this image for signs of AI generation or manipulation.\nEvidence from other layers: ${evidence}\nRespond in JSON: {"verdict": "authentic"|"likely_authentic"|"uncertain"|"likely_synthetic"|"synthetic","confidence":0-100,"flags":[],"reasoning":"2-3 sentences"}`;
     const response = await anthropic.messages.create({ model: "claude-opus-4-5", max_tokens: 500, messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } }, { type: "text", text: prompt }] }] });
     const text = response.content[0].text;
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON");
     const p = JSON.parse(match[0]);
     const riskMap = { authentic: "low", likely_authentic: "low", uncertain: "medium", likely_synthetic: "high", synthetic: "high" };
-    return { risk: riskMap[p.verdict] || "medium", verdict: p.verdict, confidence: p.confidence, flags: p.flags || [], reasoning: p.reasoning, detail: `Claude: ${p.verdict} (${p.confidence}% confidence). ${p.reasoning}` };
+    return { risk: riskMap[p.verdict] || "medium", active: true, verdict: p.verdict, confidence: p.confidence, flags: p.flags || [], reasoning: p.reasoning, detail: `Claude: ${p.verdict} (${p.confidence}% confidence). ${p.reasoning}` };
   } catch (e) {
-    return { risk: "unknown", verdict: null, reasoning: null, detail: `LLM error: ${e.message}` };
+    return { risk: "not_configured", active: false, verdict: null, reasoning: null, detail: `LLM error: ${e.message}` };
   }
 }
 
 // ─── LAYER 6: Context
 async function checkContext(filename) {
-  return { risk: "unknown", detail: "Context analysis not yet configured", filename };
+  return { risk: "not_configured", active: false, detail: "Context analysis not yet configured", filename };
 }
 
 function calculateTrustScore(layers) {
+  // C2PA shortcut
   if (layers.c2pa.valid) return 95;
+
+  // Only score layers that actually ran (active: true)
   const weights = { metadata: 15, origin: 15, detection: 20, llm: 25, context: 10 };
-  const penalties = { low: 0, medium: 0.5, high: 1, unknown: 0.3 };
+  const penalties = { low: 0, medium: 0.5, high: 1 };
+
   let totalW = 0, totalP = 0;
   for (const [k, w] of Object.entries(weights)) {
+    const layer = layers[k];
+    if (!layer?.active) continue; // skip unconfigured layers
     totalW += w;
-    totalP += w * (penalties[layers[k]?.risk] ?? 0.3);
+    totalP += w * (penalties[layer.risk] ?? 0.5);
   }
+
+  // If no active layers at all, return a neutral "insufficient data" score
+  if (totalW === 0) return null;
+
   return Math.max(0, Math.min(100, Math.round(100 - (totalP / totalW) * 100)));
 }
 
 function scoreToVerdict(s) {
+  if (s === null) return { label: "Insufficient Data", color: "gray", recommendation: "Not enough layers ran to produce a reliable score. Configure additional analysis APIs." };
   if (s >= 80) return { label: "High Trust", color: "green", recommendation: "Strong authenticity signals. Suitable for publication with standard editorial review." };
   if (s >= 60) return { label: "Moderate Trust", color: "yellow", recommendation: "Some uncertainty. Additional verification recommended." };
   if (s >= 40) return { label: "Low Trust", color: "orange", recommendation: "Multiple risk signals. Do not publish without independent verification." };
