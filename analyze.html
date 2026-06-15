@@ -174,12 +174,59 @@ uploadZone.addEventListener('drop', e => {
 
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
 
-function setFile(f) {
-  selectedFile = f;
+// Compress image to under 4MB before upload (keeps quality as high as possible)
+async function compressImage(file) {
+  const MAX_BYTES = 4 * 1024 * 1024; // 4MB
+  if (file.size <= MAX_BYTES) return file; // already small enough
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      // Scale down if very large (max 4000px on longest side)
+      let { width, height } = img;
+      const MAX_DIM = 4000;
+      if (width > MAX_DIM || height > MAX_DIM) {
+        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+      // Try quality levels from 0.92 down until under 4MB
+      let quality = 0.92;
+      const tryCompress = () => {
+        canvas.toBlob(blob => {
+          if (blob.size <= MAX_BYTES || quality <= 0.5) {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          } else {
+            quality -= 0.08;
+            tryCompress();
+          }
+        }, 'image/jpeg', quality);
+      };
+      tryCompress();
+    };
+    img.src = url;
+  });
+}
+
+async function setFile(f) {
+  // Show preview immediately from original
   const url = URL.createObjectURL(f);
   previewImg.src = url;
   previewBox.style.display = 'block';
+  analyzeBtn.disabled = true;
+  analyzeBtn.textContent = 'Preparing…';
+
+  selectedFile = await compressImage(f);
+
   analyzeBtn.disabled = false;
+  analyzeBtn.textContent = 'Run TRST Analysis';
 }
 
 // Fake progress animation
