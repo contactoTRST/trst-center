@@ -1,1 +1,13 @@
-{"rewrites":[{"source":"/analyze","destination":"/analyze.html"}]}
+{
+  "rewrites": [
+    {
+      "source": "/analyze",
+      "destination": "/analyze.html"
+    }
+  ],
+  "functions": {
+    "api/analyze.js": {
+      "maxDuration": 30
+    }
+  }
+}
