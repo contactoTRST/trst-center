@@ -9,12 +9,9 @@
 html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--white);color:var(--black);-webkit-font-smoothing:antialiased;min-height:100vh}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:64px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--gray-200)}
 .nav-logo{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;color:var(--black);text-decoration:none}.nav-logo span{color:var(--accent)}
-
-/* Upload Zone */
 .main{padding:96px 1.5rem 4rem;max-width:720px;margin:0 auto}
 h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .subtitle{color:var(--gray-600);margin-bottom:2.5rem;font-size:1rem}
-
 .upload-zone{border:2px dashed var(--gray-200);border-radius:16px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray-100);position:relative}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-light)}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
@@ -23,26 +20,17 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .upload-sub{font-size:.85rem;color:var(--gray-400)}
 .upload-preview{display:none;margin-top:1.5rem}
 .upload-preview img{max-height:200px;border-radius:8px;object-fit:contain}
-
 .analyze-btn{display:block;width:100%;margin-top:1.5rem;padding:1rem;background:var(--black);color:var(--white);border:none;border-radius:10px;font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:opacity .2s}
 .analyze-btn:disabled{opacity:.4;cursor:not-allowed}
 .analyze-btn:hover:not(:disabled){opacity:.85}
-
-/* Progress */
 .progress-section{display:none;margin-top:2rem}
 .progress-title{font-size:.9rem;font-weight:600;color:var(--gray-600);margin-bottom:1rem}
 .layer-progress{display:flex;flex-direction:column;gap:.75rem}
 .layer-item{display:flex;align-items:center;gap:.75rem;font-size:.875rem}
 .layer-dot{width:10px;height:10px;border-radius:50%;background:var(--gray-200);flex-shrink:0;transition:background .3s}
-.layer-dot.active{background:var(--accent)}
-.layer-dot.done{background:var(--green)}
-.layer-dot.pulse{animation:pulse 1s infinite}
+.layer-dot.active{background:var(--accent)}.layer-dot.done{background:var(--green)}.layer-dot.pulse{animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.layer-name{color:var(--gray-600)}
-.layer-name.active{color:var(--black);font-weight:600}
-.layer-name.done{color:var(--green)}
-
-/* Report */
+.layer-name{color:var(--gray-600)}.layer-name.active{color:var(--black);font-weight:600}.layer-name.done{color:var(--green)}
 .report{display:none;margin-top:2.5rem;border:1px solid var(--gray-200);border-radius:16px;overflow:hidden}
 .report-header{padding:1.5rem 2rem;background:var(--black);color:var(--white);display:flex;align-items:center;justify-content:space-between}
 .report-title-block h2{font-size:1rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.2rem}
@@ -51,32 +39,22 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .score-num{font-size:3rem;font-weight:800;line-height:1}
 .score-num.green{color:#4ade80}.score-num.yellow{color:#fbbf24}.score-num.orange{color:#fb923c}.score-num.red{color:#f87171}
 .score-label{font-size:.7rem;color:#a3a3a3;text-transform:uppercase;letter-spacing:.05em}
-
 .verdict-bar{padding:1rem 2rem;font-size:.9rem;font-weight:600}
-.verdict-bar.green{background:#f0fdf4;color:#15803d}
-.verdict-bar.yellow{background:#fefce8;color:#a16207}
-.verdict-bar.orange{background:#fff7ed;color:#c2410c}
-.verdict-bar.red{background:#fef2f2;color:#b91c1c}
-
+.verdict-bar.green{background:#f0fdf4;color:#15803d}.verdict-bar.yellow{background:#fefce8;color:#a16207}.verdict-bar.orange{background:#fff7ed;color:#c2410c}.verdict-bar.red{background:#fef2f2;color:#b91c1c}
 .layers-breakdown{padding:1.5rem 2rem}
 .layers-breakdown h3{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-400);margin-bottom:1rem}
 .layer-row{display:flex;align-items:flex-start;gap:1rem;padding:.875rem 0;border-bottom:1px solid var(--gray-100)}
 .layer-row:last-child{border-bottom:none}
 .lr-num{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);width:70px;flex-shrink:0;padding-top:2px}
-.lr-content{flex:1}
-.lr-name{font-size:.875rem;font-weight:600;margin-bottom:.2rem}
-.lr-detail{font-size:.8rem;color:var(--gray-600);line-height:1.5}
+.lr-content{flex:1}.lr-name{font-size:.875rem;font-weight:600;margin-bottom:.2rem}.lr-detail{font-size:.8rem;color:var(--gray-600);line-height:1.5}
 .lr-badge{font-size:.7rem;font-weight:700;padding:.2rem .55rem;border-radius:4px;white-space:nowrap;flex-shrink:0}
-.badge-green{background:#f0fdf4;color:#15803d}
-.badge-yellow{background:#fefce8;color:#a16207}
-.badge-orange{background:#fff7ed;color:#c2410c}
-.badge-red{background:#fef2f2;color:#b91c1c}
-.badge-gray{background:var(--gray-100);color:var(--gray-600)}
-
+.badge-green{background:#f0fdf4;color:#15803d}.badge-yellow{background:#fefce8;color:#a16207}.badge-orange{background:#fff7ed;color:#c2410c}.badge-red{background:#fef2f2;color:#b91c1c}.badge-gray{background:var(--gray-100);color:var(--gray-600)}
 .report-footer{padding:1.25rem 2rem;background:var(--gray-100);font-size:.8rem;color:var(--gray-400);display:flex;align-items:center;justify-content:space-between}
-.new-analysis-btn{background:var(--black);color:var(--white);border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer;margin-top:1.5rem;display:none}
-
-/* Error */
+.report-actions{display:none;margin-top:1.25rem;gap:.75rem;flex-wrap:wrap}
+.new-analysis-btn{background:var(--black);color:var(--white);border:none;padding:.65rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:opacity .2s}
+.new-analysis-btn:hover{opacity:.8}
+.pdf-btn{background:var(--accent);color:var(--white);border:none;padding:.65rem 1.4rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:opacity .2s}
+.pdf-btn:hover{opacity:.88}.pdf-btn:disabled{opacity:.5;cursor:not-allowed}
 .error-box{display:none;margin-top:1.5rem;padding:1rem 1.25rem;background:#fef2f2;border-radius:8px;color:#b91c1c;font-size:.875rem}
 </style>
 </head>
@@ -98,18 +76,17 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
   </div>
 
   <button class="analyze-btn" id="analyzeBtn" disabled>Run TRST Analysis</button>
-
   <div class="error-box" id="errorBox"></div>
 
   <div class="progress-section" id="progressSection">
     <p class="progress-title">Running analysis…</p>
     <div class="layer-progress">
-      <div class="layer-item" id="prog-1"><div class="layer-dot" id="dot-1"></div><span class="layer-name" id="lname-1">Layer 1 — C2PA Provenance</span></div>
-      <div class="layer-item" id="prog-2"><div class="layer-dot" id="dot-2"></div><span class="layer-name" id="lname-2">Layer 2 — Metadata Forensics</span></div>
-      <div class="layer-item" id="prog-3"><div class="layer-dot" id="dot-3"></div><span class="layer-name" id="lname-3">Layer 3 — Origin Tracing</span></div>
-      <div class="layer-item" id="prog-4"><div class="layer-dot" id="dot-4"></div><span class="layer-name" id="lname-4">Layer 4 — AI Detection APIs</span></div>
-      <div class="layer-item" id="prog-5"><div class="layer-dot" id="dot-5"></div><span class="layer-name" id="lname-5">Layer 5 — LLM Consensus</span></div>
-      <div class="layer-item" id="prog-6"><div class="layer-dot" id="dot-6"></div><span class="layer-name" id="lname-6">Layer 6 — Context Analysis</span></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-1"></div><span class="layer-name" id="lname-1">Layer 1 — C2PA Provenance</span></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-2"></div><span class="layer-name" id="lname-2">Layer 2 — Metadata Forensics</span></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-3"></div><span class="layer-name" id="lname-3">Layer 3 — Origin Tracing</span></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-4"></div><span class="layer-name" id="lname-4">Layer 4 — AI Detection APIs</span></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-5"></div><span class="layer-name" id="lname-5">Layer 5 — LLM Consensus</span></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-6"></div><span class="layer-name" id="lname-6">Layer 6 — Context Analysis</span></div>
     </div>
   </div>
 
@@ -135,8 +112,13 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
     </div>
   </div>
 
-  <button class="new-analysis-btn" id="newBtn">Analyze Another Image</button>
+  <div class="report-actions" id="reportActions">
+    <button class="pdf-btn" id="pdfBtn">⬇ Download PDF Report</button>
+    <button class="new-analysis-btn" id="newBtn">Analyze Another Image</button>
+  </div>
 </main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 const fileInput = document.getElementById('fileInput');
@@ -146,12 +128,15 @@ const previewImg = document.getElementById('previewImg');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const progressSection = document.getElementById('progressSection');
 const reportSection = document.getElementById('reportSection');
+const reportActions = document.getElementById('reportActions');
 const errorBox = document.getElementById('errorBox');
 const newBtn = document.getElementById('newBtn');
+const pdfBtn = document.getElementById('pdfBtn');
 
 let selectedFile = null;
+let lastReportData = null;
+let lastFileName = '';
 
-// Drag and drop
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
 uploadZone.addEventListener('drop', e => {
@@ -159,32 +144,28 @@ uploadZone.addEventListener('drop', e => {
   const f = e.dataTransfer.files[0];
   if (f) setFile(f);
 });
-
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
 
 function setFile(f) {
   selectedFile = f;
-  const url = URL.createObjectURL(f);
-  previewImg.src = url;
+  lastFileName = f.name;
+  previewImg.src = URL.createObjectURL(f);
   previewBox.style.display = 'block';
   analyzeBtn.disabled = false;
 }
 
-// Fake progress animation — real result arrives all at once from API
 function animateLayers(durationMs, onDone) {
-  const delays = [0, 0.1, 0.25, 0.45, 0.65, 0.85]; // fraction of total time
+  const delays = [0, 0.1, 0.25, 0.45, 0.65, 0.85];
   delays.forEach((frac, i) => {
     const n = i + 1;
     setTimeout(() => {
-      // activate
-      document.getElementById(`dot-${n}`).classList.add('active', 'pulse');
-      document.getElementById(`lname-${n}`).classList.add('active');
-      // complete previous
+      document.getElementById('dot-'+n).classList.add('active','pulse');
+      document.getElementById('lname-'+n).classList.add('active');
       if (n > 1) {
-        document.getElementById(`dot-${n-1}`).classList.remove('active', 'pulse');
-        document.getElementById(`dot-${n-1}`).classList.add('done');
-        document.getElementById(`lname-${n-1}`).classList.remove('active');
-        document.getElementById(`lname-${n-1}`).classList.add('done');
+        document.getElementById('dot-'+(n-1)).classList.remove('active','pulse');
+        document.getElementById('dot-'+(n-1)).classList.add('done');
+        document.getElementById('lname-'+(n-1)).classList.remove('active');
+        document.getElementById('lname-'+(n-1)).classList.add('done');
       }
     }, frac * durationMs);
   });
@@ -199,113 +180,236 @@ function animateLayers(durationMs, onDone) {
 
 analyzeBtn.addEventListener('click', async () => {
   if (!selectedFile) return;
-
-  // Reset UI
   errorBox.style.display = 'none';
   reportSection.style.display = 'none';
-  newBtn.style.display = 'none';
+  reportActions.style.display = 'none';
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = 'Analyzing…';
   progressSection.style.display = 'block';
-
-  // Reset dots
   for (let i = 1; i <= 6; i++) {
-    const dot = document.getElementById(`dot-${i}`);
-    const name = document.getElementById(`lname-${i}`);
-    dot.className = 'layer-dot';
-    name.className = 'layer-name';
+    document.getElementById('dot-'+i).className = 'layer-dot';
+    document.getElementById('lname-'+i).className = 'layer-name';
   }
 
   const form = new FormData();
   form.append('image', selectedFile);
 
-  // Start animation (assumes ~15s for full analysis)
   const ANIM_MS = 14000;
-  let animDone = false;
-  let resultData = null;
-
-  const renderWhenReady = () => {
-    if (animDone && resultData) renderReport(resultData);
-  };
-
+  let animDone = false, resultData = null;
+  const renderWhenReady = () => { if (animDone && resultData) renderReport(resultData); };
   animateLayers(ANIM_MS, () => { animDone = true; renderWhenReady(); });
 
   try {
     const res = await fetch('/api/analyze', { method: 'POST', body: form });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(err.error || `HTTP ${res.status}`);
+      throw new Error(err.error || 'HTTP ' + res.status);
     }
     resultData = await res.json();
     renderWhenReady();
   } catch (e) {
     progressSection.style.display = 'none';
-    errorBox.textContent = `Analysis failed: ${e.message}`;
+    errorBox.textContent = 'Analysis failed: ' + e.message;
     errorBox.style.display = 'block';
     analyzeBtn.disabled = false;
     analyzeBtn.textContent = 'Run TRST Analysis';
   }
 });
 
-function riskToBadge(risk) {
-  const map = { low: ['badge-green','Low Risk'], medium: ['badge-yellow','Medium Risk'], high: ['badge-red','High Risk'], unknown: ['badge-gray','Not Checked'] };
-  return map[risk] || map.unknown;
+const LAYER_DEFS = [
+  { key:'c2pa',      num:'Layer 1', name:'C2PA Provenance' },
+  { key:'metadata',  num:'Layer 2', name:'Metadata Forensics' },
+  { key:'origin',    num:'Layer 3', name:'Origin Tracing' },
+  { key:'detection', num:'Layer 4', name:'AI Detection APIs' },
+  { key:'llm',       num:'Layer 5', name:'LLM Consensus (Claude)' },
+  { key:'context',   num:'Layer 6', name:'Context & Credibility' },
+];
+
+function riskBadge(risk) {
+  return { low:['badge-green','Low Risk'], medium:['badge-yellow','Medium Risk'], high:['badge-red','High Risk'], unknown:['badge-gray','Not Checked'] }[risk] || ['badge-gray','Not Checked'];
 }
 
 function renderReport(data) {
+  lastReportData = data;
   progressSection.style.display = 'none';
+  const score = data.trustScore;
+  const verdict = data.verdict;
+  const color = verdict.color || 'gray';
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreNum').className = 'score-num ' + color;
+  document.getElementById('verdictBar').textContent = verdict.label + ' — ' + verdict.recommendation;
+  document.getElementById('verdictBar').className = 'verdict-bar ' + color;
+  document.getElementById('reportMeta').textContent = (data.filename || lastFileName || 'Image') + ' · ' + new Date(data.analyzedAt).toLocaleString();
+  document.getElementById('reportTimestamp').textContent = 'Analyzed ' + new Date(data.analyzedAt).toLocaleString();
+  const L = data.layers || {};
+  document.getElementById('layersDetail').innerHTML = LAYER_DEFS.map(ld => {
+    const layer = L[ld.key] || {};
+    const [bc, bl] = riskBadge(layer.risk || 'unknown');
+    return '<div class="layer-row"><div class="lr-num">'+ld.num+'</div><div class="lr-content"><div class="lr-name">'+ld.name+'</div><div class="lr-detail">'+(layer.detail||'—')+'</div></div><div class="lr-badge '+bc+'">'+bl+'</div></div>';
+  }).join('');
+  reportSection.style.display = 'block';
+  reportActions.style.display = 'flex';
+  analyzeBtn.textContent = 'Run TRST Analysis';
+  reportSection.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ─── PDF GENERATOR ────────────────────────────────────────────────────────────
+pdfBtn.addEventListener('click', () => {
+  if (!lastReportData) return;
+  pdfBtn.disabled = true;
+  pdfBtn.textContent = 'Generating…';
+  try { generatePDF(lastReportData); }
+  finally { pdfBtn.disabled = false; pdfBtn.innerHTML = '⬇ Download PDF Report'; }
+});
+
+function generatePDF(data) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, H = 297, M = 18, COL = W - M * 2;
+  let y = 0;
+
+  // Palette
+  const BLK=[10,10,10], WHT=[255,255,255], ACC=[26,86,219];
+  const G4=[163,163,163], G6=[82,82,82], G1=[245,245,245];
+  const GRN=[22,163,74], YLW=[202,138,4], RED=[220,38,38], ORG=[234,88,12];
 
   const score = data.trustScore;
   const verdict = data.verdict;
   const color = verdict.color || 'gray';
+  const scoreRGB = {green:GRN, yellow:YLW, orange:ORG, red:RED}[color] || G4;
 
-  document.getElementById('scoreNum').textContent = score;
-  document.getElementById('scoreNum').className = `score-num ${color}`;
-  document.getElementById('verdictBar').textContent = `${verdict.label} — ${verdict.recommendation}`;
-  document.getElementById('verdictBar').className = `verdict-bar ${color}`;
-  document.getElementById('reportMeta').textContent = `${data.filename || 'Image'} · ${new Date(data.analyzedAt).toLocaleString()}`;
-  document.getElementById('reportTimestamp').textContent = `Analyzed ${new Date(data.analyzedAt).toLocaleString()}`;
+  function riskRGB(r){ return {low:GRN,medium:YLW,high:RED,unknown:G4}[r]||G4; }
+  function riskTxt(r){ return {low:'LOW RISK',medium:'MEDIUM RISK',high:'HIGH RISK',unknown:'NOT CHECKED'}[r]||'NOT CHECKED'; }
 
-  const L = data.layers;
-  const layerDefs = [
-    { key: 'c2pa', num: 'Layer 1', name: 'C2PA Provenance', detail: L.c2pa?.detail },
-    { key: 'metadata', num: 'Layer 2', name: 'Metadata Forensics', detail: L.metadata?.detail },
-    { key: 'origin', num: 'Layer 3', name: 'Origin Tracing', detail: L.origin?.detail },
-    { key: 'detection', num: 'Layer 4', name: 'AI Detection APIs', detail: L.detection?.detail },
-    { key: 'llm', num: 'Layer 5', name: 'LLM Consensus (Claude)', detail: L.llm?.detail },
-    { key: 'context', num: 'Layer 6', name: 'Context & Credibility', detail: L.context?.detail },
-  ];
+  // ── HEADER
+  doc.setFillColor(...BLK); doc.rect(0,0,W,54,'F');
 
-  const container = document.getElementById('layersDetail');
-  container.innerHTML = layerDefs.map(ld => {
-    const risk = L[ld.key]?.risk || 'unknown';
-    const [badgeClass, badgeLabel] = riskToBadge(risk);
-    return `<div class="layer-row">
-      <div class="lr-num">${ld.num}</div>
-      <div class="lr-content">
-        <div class="lr-name">${ld.name}</div>
-        <div class="lr-detail">${ld.detail || '—'}</div>
-      </div>
-      <div class="lr-badge ${badgeClass}">${badgeLabel}</div>
-    </div>`;
-  }).join('');
+  doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(...WHT);
+  doc.text('TRST',M,20);
+  doc.setTextColor(...ACC); doc.text('.',M+26,20);
+  doc.setTextColor(...WHT); doc.text('center',M+29,20);
 
-  reportSection.style.display = 'block';
-  newBtn.style.display = 'inline-block';
-  analyzeBtn.textContent = 'Run TRST Analysis';
-  reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...G4);
+  doc.text('AUTHENTICITY REPORT',M,28);
+
+  const fname = data.filename || lastFileName || 'Uploaded image';
+  const dateStr = new Date(data.analyzedAt).toLocaleString();
+  doc.setFontSize(7.5);
+  doc.text('File: ' + fname, M, 36);
+  doc.text('Analyzed: ' + dateStr, M, 43);
+
+  // Score (right)
+  doc.setFont('helvetica','bold'); doc.setFontSize(42); doc.setTextColor(...scoreRGB);
+  doc.text(String(score), W-M, 30, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...G4);
+  doc.text('TRUST SCORE / 100', W-M, 37, {align:'right'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...scoreRGB);
+  doc.text(verdict.label.toUpperCase(), W-M, 46, {align:'right'});
+
+  y = 54;
+
+  // ── VERDICT STRIPE
+  doc.setFillColor(...scoreRGB); doc.rect(0,y,W,11,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...WHT);
+  const verdictText = verdict.recommendation || verdict.label;
+  const vLines = doc.splitTextToSize(verdictText, COL);
+  doc.text(vLines[0], M, y+7.5);
+  y += 11;
+
+  // ── SECTION LABEL
+  y += 9;
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...G4);
+  doc.text('EVIDENCE BY LAYER', M, y);
+  y += 3;
+  doc.setDrawColor(...G4); doc.setLineWidth(0.2);
+  doc.line(M, y, W-M, y);
+  y += 6;
+
+  // ── LAYERS
+  const L = data.layers || {};
+  LAYER_DEFS.forEach((ld, idx) => {
+    const layer = L[ld.key] || {};
+    const risk = layer.risk || 'unknown';
+    const detail = layer.detail || 'No data available for this layer.';
+    const rc = riskRGB(risk);
+    const rt = riskTxt(risk);
+    const detailLines = doc.splitTextToSize(detail, COL - 62);
+    const rowH = Math.max(16, 8 + detailLines.length * 4.8);
+
+    if (idx % 2 === 0) {
+      doc.setFillColor(...G1);
+      doc.rect(M-3, y-3, COL+6, rowH, 'F');
+    }
+
+    // Number pill
+    doc.setFillColor(...ACC);
+    doc.roundedRect(M, y-1, 11, 6, 1.2, 1.2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...WHT);
+    doc.text('0'+(idx+1), M+5.5, y+3.5, {align:'center'});
+
+    // Layer name
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...BLK);
+    doc.text(ld.name, M+14, y+3.5);
+
+    // Risk badge
+    const bW = 28;
+    doc.setFillColor(...rc);
+    doc.roundedRect(W-M-bW, y-1, bW, 6, 1.2, 1.2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(5.5); doc.setTextColor(...WHT);
+    doc.text(rt, W-M-bW/2, y+3.5, {align:'center'});
+
+    // Detail
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...G6);
+    doc.text(detailLines, M+14, y+10);
+
+    y += rowH + 3;
+
+    if (y > H - 48) { doc.addPage(); y = 20; }
+  });
+
+  // ── DIVIDER
+  y += 3;
+  doc.setDrawColor(...G4); doc.setLineWidth(0.2);
+  doc.line(M, y, W-M, y);
+  y += 8;
+
+  // ── CONCLUSION BOX
+  const lightColor = scoreRGB.map(c => Math.min(255, c + 205));
+  doc.setFillColor(...lightColor);
+  doc.roundedRect(M, y, COL, 26, 2, 2, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...scoreRGB);
+  doc.text('CONCLUSION', M+4, y+8);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...BLK);
+  const concLines = doc.splitTextToSize(verdict.recommendation || verdict.label, COL-8);
+  doc.text(concLines, M+4, y+15);
+  y += 32;
+
+  // ── METHODOLOGY
+  doc.setFont('helvetica','italic'); doc.setFontSize(6.5); doc.setTextColor(...G4);
+  const note = 'This report was generated by TRST.center using a 6-layer evidence framework combining cryptographic provenance verification, forensic metadata analysis, AI detection signals, and large language model reasoning. TRST does not claim certainty — it provides a structured, transparent assessment to support human judgment.';
+  const noteLines = doc.splitTextToSize(note, COL);
+  doc.text(noteLines, M, y);
+  y += noteLines.length * 3.8 + 4;
+
+  // ── FOOTER
+  doc.setFillColor(...BLK); doc.rect(0, H-14, W, 14, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHT);
+  doc.text('TRST.center', M, H-6);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...G4);
+  doc.text('Building the trust layer for the internet.', M+30, H-6);
+  doc.text('Generated ' + new Date().toLocaleString(), W-M, H-6, {align:'right'});
+
+  const safeName = (data.filename || lastFileName || 'report').replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]/gi,'_');
+  doc.save('TRST_Report_' + safeName + '_score' + score + '.pdf');
 }
 
+// ─── RESET
 newBtn.addEventListener('click', () => {
-  selectedFile = null;
-  fileInput.value = '';
-  previewBox.style.display = 'none';
-  previewImg.src = '';
-  reportSection.style.display = 'none';
-  newBtn.style.display = 'none';
-  analyzeBtn.disabled = true;
-  analyzeBtn.textContent = 'Run TRST Analysis';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  selectedFile = null; lastReportData = null; lastFileName = '';
+  fileInput.value = ''; previewBox.style.display = 'none'; previewImg.src = '';
+  reportSection.style.display = 'none'; reportActions.style.display = 'none';
+  analyzeBtn.disabled = true; analyzeBtn.textContent = 'Run TRST Analysis';
+  window.scrollTo({top:0,behavior:'smooth'});
 });
 </script>
 </body>
