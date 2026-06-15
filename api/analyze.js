@@ -103,8 +103,6 @@ function scoreToVerdict(s) {
   return { label: "Very Low Trust", color: "red", recommendation: "High probability of synthetic content. TRST does not recommend publishing." };
 }
 
-export const config = { api: { bodyParser: false } };
-
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   const { default: formidable } = await import("formidable");
