@@ -1,135 +1,814 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>TRST - Know What to Trust</title>
-<meta name="description" content="TRST analyzes digital media and delivers an evidence-based authenticity report in seconds."/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--black:#0a0a0a;--white:#fff;--gray-100:#f5f5f5;--gray-200:#e5e5e5;--gray-400:#a3a3a3;--gray-600:#525252;--gray-800:#262626;--accent:#1a56db;--accent-light:#eff6ff;--green:#16a34a;--yellow:#ca8a04;--red:#dc2626;--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--white);color:var(--black);line-height:1.6;-webkit-font-smoothing:antialiased}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:64px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--gray-200)}
-.nav-logo{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;color:var(--black);text-decoration:none}.nav-logo span{color:var(--accent)}
-.nav-cta{background:var(--black);color:var(--white);border:none;padding:.5rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:500;cursor:pointer;text-decoration:none}
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8rem 1.5rem 5rem}
-.hero-badge{display:inline-flex;align-items:center;gap:.4rem;background:var(--accent-light);color:var(--accent);font-size:.8rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:.35rem .9rem;border-radius:100px;margin-bottom:2rem}
-h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;letter-spacing:-.04em;line-height:1.05;max-width:800px;margin-bottom:1.5rem}
-h1 em{font-style:normal;color:var(--accent)}
-.hero-sub{font-size:clamp(1rem,2vw,1.2rem);color:var(--gray-600);max-width:560px;margin-bottom:3rem;line-height:1.7}
-.waitlist-form{display:flex;gap:.5rem;max-width:460px;width:100%;margin:0 auto 1rem}
-.waitlist-form input{flex:1;padding:.75rem 1rem;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.95rem;font-family:var(--font);outline:none;transition:border-color .2s}
-.waitlist-form input:focus{border-color:var(--accent)}
-.waitlist-form button{background:var(--black);color:var(--white);border:none;padding:.75rem 1.5rem;border-radius:8px;font-size:.95rem;font-weight:600;font-family:var(--font);cursor:pointer;white-space:nowrap}
-.form-note{font-size:.8rem;color:var(--gray-400)}.success-msg{display:none;color:var(--green);font-weight:600;font-size:.95rem;margin-top:.5rem}
-.section{padding:6rem 1.5rem}.section-inner{max-width:960px;margin:0 auto}
-.section-label{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
-h2{font-size:clamp(1.75rem,4vw,2.75rem);font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-bottom:1.5rem}
-.section-body{font-size:1.1rem;color:var(--gray-600);max-width:640px;line-height:1.75}
-.divider{border:none;border-top:1px solid var(--gray-200);margin:0}
-.layers-section{background:var(--gray-100)}
-.layers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-top:3rem}
-.layer-card{background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:1.75rem;transition:box-shadow .2s}
-.layer-card:hover{box-shadow:0 4px 24px rgba(0,0,0,.07)}
-.layer-num{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-400);margin-bottom:.75rem}
-.layer-title{font-size:1rem;font-weight:700;margin-bottom:.5rem}.layer-desc{font-size:.875rem;color:var(--gray-600);line-height:1.6}
-.layer-exit{display:inline-block;margin-top:.75rem;font-size:.75rem;font-weight:600;color:var(--green);background:#f0fdf4;padding:.2rem .6rem;border-radius:4px}
-.report-preview{background:var(--white);border:1px solid var(--gray-200);border-radius:16px;padding:2rem;margin-top:3rem;box-shadow:0 8px 40px rgba(0,0,0,.06);max-width:600px}
-.report-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--gray-200)}
-.report-title{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-400)}
-.score-num{font-size:2.5rem;font-weight:800;color:var(--red);line-height:1}.score-label{font-size:.7rem;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em}
-.report-row{display:flex;align-items:flex-start;gap:1rem;padding:.75rem 0;border-bottom:1px solid var(--gray-100)}.report-row:last-child{border-bottom:none}
-.report-layer{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);width:90px;flex-shrink:0;padding-top:2px}
-.report-finding{flex:1;font-size:.875rem;color:var(--gray-800)}
-.report-status{font-size:.75rem;font-weight:700;padding:.2rem .5rem;border-radius:4px;white-space:nowrap}
-.status-high{background:#fef2f2;color:var(--red)}.status-med{background:#fffbeb;color:var(--yellow)}
-.report-conclusion{margin-top:1.25rem;padding:1rem;background:#fef2f2;border-radius:8px;font-size:.875rem;color:var(--red);font-weight:500;line-height:1.5}
-.who-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.25rem;margin-top:2.5rem}
-.who-card{padding:1.5rem;border:1px solid var(--gray-200);border-radius:10px}
-.who-icon{font-size:1.5rem;margin-bottom:.75rem}.who-title{font-size:.95rem;font-weight:700;margin-bottom:.4rem}.who-desc{font-size:.8rem;color:var(--gray-600);line-height:1.5}
-.manifesto{background:var(--black);color:var(--white)}.manifesto h2{color:var(--white)}.manifesto .section-label{color:#60a5fa}
-.manifesto-body{font-size:1.2rem;line-height:1.85;color:#d4d4d4;max-width:640px}.manifesto-body strong{color:var(--white)}
-.final-cta{text-align:center;padding:7rem 1.5rem;background:var(--gray-100)}
-footer{text-align:center;padding:2rem 1.5rem;font-size:.8rem;color:var(--gray-400);border-top:1px solid var(--gray-200)}
-footer a{color:var(--gray-400);text-decoration:none}
-@media(max-width:600px){.waitlist-form{flex-direction:column}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRST — Know What to Trust</title>
+  <meta name="description" content="TRST analyzes digital media and delivers an evidence-based authenticity report in seconds. Built for journalists, investigators, and anyone who needs to know what's real." />
+  <meta property="og:title" content="TRST — Know What to Trust" />
+  <meta property="og:description" content="Evidence-based media authenticity reports in seconds. Not a detector. A framework." />
+  <meta property="og:url" content="https://trst.center" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #e5e5e5;
+      --gray-400: #a3a3a3;
+      --gray-600: #525252;
+      --gray-800: #262626;
+      --accent: #1a56db;
+      --accent-light: #eff6ff;
+      --green: #16a34a;
+      --yellow: #ca8a04;
+      --red: #dc2626;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--white);
+      color: var(--black);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 64px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .nav-logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--black);
+      text-decoration: none;
+    }
+
+    .nav-logo span {
+      color: var(--accent);
+    }
+
+    .nav-cta {
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      padding: 0.5rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .nav-cta:hover { background: var(--gray-800); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8rem 1.5rem 5rem;
+      background: var(--white);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.9rem;
+      border-radius: 100px;
+      margin-bottom: 2rem;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      max-width: 800px;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--gray-600);
+      max-width: 560px;
+      margin-bottom: 3rem;
+      line-height: 1.7;
+    }
+
+    /* WAITLIST FORM */
+    .waitlist-form {
+      display: flex;
+      gap: 0.5rem;
+      max-width: 460px;
+      width: 100%;
+      margin: 0 auto 1rem;
+    }
+
+    .waitlist-form input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .waitlist-form input:focus {
+      border-color: var(--accent);
+    }
+
+    .waitlist-form button {
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .waitlist-form button:hover { background: var(--gray-800); }
+    .waitlist-form button:active { transform: scale(0.98); }
+
+    .form-note {
+      font-size: 0.8rem;
+      color: var(--gray-400);
+    }
+
+    .success-msg {
+      display: none;
+      color: var(--green);
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
+
+    /* PROBLEM SECTION */
+    .section {
+      padding: 6rem 1.5rem;
+    }
+
+    .section-inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-body {
+      font-size: 1.1rem;
+      color: var(--gray-600);
+      max-width: 640px;
+      line-height: 1.75;
+    }
+
+    /* DIVIDER */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--gray-200);
+      margin: 0;
+    }
+
+    /* LAYERS */
+    .layers-section {
+      background: var(--gray-100);
+    }
+
+    .layers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .layer-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 1.75rem;
+      position: relative;
+      transition: box-shadow 0.2s;
+    }
+
+    .layer-card:hover {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    }
+
+    .layer-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 0.75rem;
+    }
+
+    .layer-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--black);
+    }
+
+    .layer-desc {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      line-height: 1.6;
+    }
+
+    .layer-exit {
+      display: inline-block;
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--green);
+      background: #f0fdf4;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+
+    .layer-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-400);
+      font-size: 1.25rem;
+      padding: 0.5rem 0;
+    }
+
+    /* REPORT PREVIEW */
+    .report-preview {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 3rem;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+      max-width: 600px;
+    }
+
+    .report-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .report-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+    }
+
+    .report-score {
+      text-align: right;
+    }
+
+    .score-num {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--red);
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 0.7rem;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .report-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .report-row:last-child { border-bottom: none; }
+
+    .report-layer {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gray-400);
+      width: 90px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .report-finding {
+      flex: 1;
+      font-size: 0.875rem;
+      color: var(--gray-800);
+    }
+
+    .report-status {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .status-high { background: #fef2f2; color: var(--red); }
+    .status-med  { background: #fffbeb; color: var(--yellow); }
+    .status-ok   { background: #f0fdf4; color: var(--green); }
+
+    .report-conclusion {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: #fef2f2;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--red);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* FOR WHO */
+    .who-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+      margin-top: 2.5rem;
+    }
+
+    .who-card {
+      padding: 1.5rem;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+    }
+
+    .who-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .who-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    .who-desc {
+      font-size: 0.8rem;
+      color: var(--gray-600);
+      line-height: 1.5;
+    }
+
+    /* MANIFESTO */
+    .manifesto {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .manifesto h2 {
+      color: var(--white);
+    }
+
+    .manifesto .section-label {
+      color: #60a5fa;
+    }
+
+    .manifesto-body {
+      font-size: 1.2rem;
+      line-height: 1.85;
+      color: #d4d4d4;
+      max-width: 640px;
+    }
+
+    .manifesto-body strong {
+      color: var(--white);
+    }
+
+    /* FINAL CTA */
+    .final-cta {
+      text-align: center;
+      padding: 7rem 1.5rem;
+      background: var(--gray-100);
+    }
+
+    .final-cta h2 {
+      margin-bottom: 1rem;
+    }
+
+    .final-cta p {
+      color: var(--gray-600);
+      margin-bottom: 2.5rem;
+      font-size: 1.05rem;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      font-size: 0.8rem;
+      color: var(--gray-400);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    footer a {
+      color: var(--gray-400);
+      text-decoration: none;
+    }
+
+    footer a:hover { color: var(--black); }
+
+    /* RESPONSIVE */
+    @media (max-width: 600px) {
+      .waitlist-form {
+        flex-direction: column;
+      }
+      .report-preview {
+        padding: 1.25rem;
+      }
+    }
+  </style>
 </head>
 <body>
-<nav><a href="#" class="nav-logo">TRST<span>.</span>center</a><a href="#waitlist" class="nav-cta">Join Waitlist</a></nav>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">TRST<span>.</span>center</a>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <a href="/analyze" style="font-size:.875rem;font-weight:600;color:var(--accent);text-decoration:none;">Try it →</a>
+    <a href="#waitlist" class="nav-cta">Join Waitlist</a>
+  </div>
+</nav>
+
+<!-- HERO -->
 <section class="hero">
-<div class="hero-badge">Now accepting early access</div>
-<h1>The question is not<br><em>"Is this AI?"</em><br>It is <em>"Can I trust this?"</em></h1>
-<p class="hero-sub">TRST analyzes digital media across six layers of evidence and delivers a professional authenticity report in seconds - built for journalists, investigators, and legal professionals who cannot afford to be wrong.</p>
-<div id="waitlist">
-<form class="waitlist-form" id="wf1"><input type="email" placeholder="your@newsroom.com" required id="ei1"/><button type="submit">Request Access</button></form>
-<p class="form-note">Free during beta - No credit card - Built for professionals</p>
-<p class="success-msg" id="sm1">You are on the list. We will be in touch soon.</p>
-</div>
+  <div class="hero-badge">Now accepting early access</div>
+
+  <h1>The question isn't<br><em>"Is this AI?"</em><br>It's <em>"Can I trust this?"</em></h1>
+
+  <p class="hero-sub">
+    TRST analyzes digital media across six layers of evidence and delivers a professional authenticity report in seconds — built for journalists, investigators, and legal professionals who can't afford to be wrong.
+  </p>
+
+  <div id="waitlist">
+    <form class="waitlist-form" id="waitlistForm">
+      <input
+        type="email"
+        placeholder="your@newsroom.com"
+        required
+        id="emailInput"
+        autocomplete="email"
+      />
+      <button type="submit">Request Access</button>
+    </form>
+    <p class="form-note">Free during beta · No credit card · Built for professionals</p>
+    <p class="success-msg" id="successMsg">✓ You're on the list. We'll be in touch soon.</p>
+    <p style="margin-top:1.25rem;font-size:.875rem;color:var(--gray-600);">Or <a href="/analyze" style="color:var(--accent);font-weight:600;text-decoration:none;">try it now →</a> — no signup required.</p>
+  </div>
 </section>
-<hr class="divider"/>
-<section class="section"><div class="section-inner">
-<p class="section-label">The Problem</p><h2>Seeing is no longer believing.</h2>
-<p class="section-body">For centuries, visual evidence was the gold standard. Today, a convincing deepfake video costs nothing and takes minutes to create. AI-generated images are indistinguishable to the human eye.<br/><br/>The challenge is no longer whether fake content exists. The challenge is how you evaluate authenticity when you cannot trust what you see - and the stakes are a published story, a court case, or an election.</p>
-</div></section>
-<hr class="divider"/>
-<section class="section layers-section"><div class="section-inner">
-<p class="section-label">How TRST Works</p><h2>Six layers of evidence.<br/>One clear verdict.</h2>
-<p class="section-body">TRST does not guess. It moves through a decision tree - each layer is a gate. If the evidence is conclusive early, we stop. If not, we go deeper.</p>
-<div class="layers-grid">
-<div class="layer-card"><div class="layer-num">Layer 1</div><div class="layer-title">C2PA Provenance</div><div class="layer-desc">Checks for a cryptographic certificate embedded at the moment of capture. If valid, the chain of custody is intact and origin is confirmed.</div><span class="layer-exit">If verified - analysis complete</span></div>
-<div class="layer-card"><div class="layer-num">Layer 2</div><div class="layer-title">Metadata Forensics</div><div class="layer-desc">Reads EXIF data - camera model, GPS, timestamp, software field. Stripped or inconsistent metadata is a strong risk indicator.</div></div>
-<div class="layer-card"><div class="layer-num">Layer 3</div><div class="layer-title">Origin Tracing</div><div class="layer-desc">Reverse image and video search to find where this content first appeared online, who published it, and when.</div></div>
-<div class="layer-card"><div class="layer-num">Layer 4</div><div class="layer-title">Pixel and Signal Analysis</div><div class="layer-desc">Runs the media through leading AI detection APIs that identify GAN fingerprints, compression anomalies, and generation artifacts.</div></div>
-<div class="layer-card"><div class="layer-num">Layer 5</div><div class="layer-title">LLM Consensus</div><div class="layer-desc">Multiple AI models independently reason over the evidence collected. Not a guess - a jury. All three must agree before high confidence is reported.</div></div>
-<div class="layer-card"><div class="layer-num">Layer 6</div><div class="layer-title">Context and Credibility</div><div class="layer-desc">Evaluates source reputation, publication history, and surrounding context. A real image used deceptively is still misinformation.</div></div>
-</div>
-</div></section>
-<hr class="divider"/>
-<section class="section"><div class="section-inner">
-<p class="section-label">The Output</p><h2>A report you can actually use.</h2>
-<p class="section-body">Not a score you have to explain. A professional document with evidence - shareable, exportable as PDF, and citable in editorial decisions, legal filings, and investigations.</p>
-<div class="report-preview">
-<div class="report-header"><div><div class="report-title">TRST Authenticity Report</div><div style="font-size:.75rem;color:#a3a3a3;margin-top:.25rem">Analyzed June 15, 2026 - Image file</div></div><div><div class="score-num">18</div><div class="score-label">Trust Score / 100</div></div></div>
-<div class="report-row"><div class="report-layer">C2PA</div><div class="report-finding">No cryptographic provenance certificate found</div><div class="report-status status-high">Not Found</div></div>
-<div class="report-row"><div class="report-layer">Metadata</div><div class="report-finding">EXIF data stripped. Software field absent. No camera signature.</div><div class="report-status status-high">Stripped</div></div>
-<div class="report-row"><div class="report-layer">Origin</div><div class="report-finding">First appearance: Telegram channel, 48 hours ago. No earlier source found.</div><div class="report-status status-med">Unverified</div></div>
-<div class="report-row"><div class="report-layer">Detection</div><div class="report-finding">Sightengine: 91% probability AI-generated. GAN artifacts detected in background regions.</div><div class="report-status status-high">High Risk</div></div>
-<div class="report-row"><div class="report-layer">LLM Consensus</div><div class="report-finding">Claude, GPT-4o, Gemini - all three independently flag as synthetic. High agreement.</div><div class="report-status status-high">Flagged</div></div>
-<div class="report-row"><div class="report-layer">Context</div><div class="report-finding">Source account created 6 days ago. No publication history. Pattern consistent with influence operations.</div><div class="report-status status-high">Suspicious</div></div>
-<div class="report-conclusion">High probability this content is synthetic or manipulated. TRST does not recommend publishing without independent verification from a primary source.</div>
-</div>
-</div></section>
-<hr class="divider"/>
-<section class="section"><div class="section-inner">
-<p class="section-label">Who It Is For</p><h2>Built for professionals<br/>who cannot afford to be wrong.</h2>
-<div class="who-grid">
-<div class="who-card"><div class="who-icon">&#128240;</div><div class="who-title">Investigative Journalists</div><div class="who-desc">Verify sources before publishing. Attach the TRST report to your editorial file.</div></div>
-<div class="who-card"><div class="who-icon">&#9878;</div><div class="who-title">Legal Professionals</div><div class="who-desc">Generate a documented authenticity assessment for digital evidence in court.</div></div>
-<div class="who-card"><div class="who-icon">&#128269;</div><div class="who-title">Fact-Checkers</div><div class="who-desc">Go beyond reverse image search. Get a full forensic breakdown in seconds.</div></div>
-<div class="who-card"><div class="who-icon">&#128737;</div><div class="who-title">Insurance Investigators</div><div class="who-desc">Detect fraudulent claim images and document the analysis for your file.</div></div>
-<div class="who-card"><div class="who-icon">&#127963;</div><div class="who-title">Government and Policy</div><div class="who-desc">Identify influence operations and synthetic media campaigns at scale.</div></div>
-<div class="who-card"><div class="who-icon">&#127891;</div><div class="who-title">Researchers</div><div class="who-desc">Standardized authenticity framework for academic and institutional work.</div></div>
-</div>
-</div></section>
-<hr class="divider"/>
-<section class="section manifesto"><div class="section-inner">
-<p class="section-label">Our Position</p>
-<h2>We do not claim to detect every fake.<br/>We help you decide what to trust.</h2>
-<p class="manifesto-body">Every AI detector will eventually be defeated by a better generator. That arms race has no finish line.<br/><br/><strong>TRST is not a detector. It is a framework.</strong><br/><br/>We combine provenance, forensics, detection signals, and expert reasoning into a single transparent report - and we show our work. Every finding is documented. Every signal is explained. No black boxes.<br/><br/>Our mission is to <strong>increase confidence in digital information without claiming certainty</strong> - because certainty is what gets you sued, and transparency is what gets you trusted.</p>
-</div></section>
-<section class="final-cta" id="early-access"><div class="section-inner" style="max-width:580px;margin:0 auto">
-<p class="section-label" style="text-align:center">Early Access</p>
-<h2>Be among the first<br/>to use TRST.</h2>
-<p style="color:var(--gray-600);margin-bottom:2.5rem;font-size:1.05rem">We are onboarding a small group of journalists, fact-checkers, and investigators for our private beta. Free access. Real feedback. Real impact.</p>
-<form class="waitlist-form" id="wf2" style="max-width:100%"><input type="email" placeholder="your@email.com" required id="ei2"/><button type="submit">Request Access</button></form>
-<p class="form-note">No spam. No credit card. Just early access.</p>
-<p class="success-msg" id="sm2">You are on the list. We will reach out within 48 hours.</p>
-</div></section>
-<footer><p>2026 TRST - <a href="mailto:hello@trst.center">hello@trst.center</a> - Building the trust layer for the internet.</p></footer>
+
+<hr class="divider" />
+
+<!-- PROBLEM -->
+<section class="section">
+  <div class="section-inner">
+    <p class="section-label">The Problem</p>
+    <h2>Seeing is no longer believing.</h2>
+    <p class="section-body">
+      For centuries, visual evidence was the gold standard. Today, a convincing deepfake video costs nothing and takes minutes to create. AI-generated images are indistinguishable to the human eye. Synthetic audio can clone anyone's voice from a 3-second clip.
+      <br /><br />
+      The challenge is no longer whether fake content exists. The challenge is how you evaluate authenticity when you can't trust what you see — and the stakes are a published story, a court case, or an election.
+    </p>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- LAYERS -->
+<section class="section layers-section">
+  <div class="section-inner">
+    <p class="section-label">How TRST Works</p>
+    <h2>Six layers of evidence.<br />One clear verdict.</h2>
+    <p class="section-body">
+      TRST doesn't guess. It moves through a decision tree — each layer is a gate. If the evidence is conclusive early, we stop. If not, we go deeper.
+    </p>
+
+    <div class="layers-grid">
+
+      <div class="layer-card">
+        <div class="layer-num">Layer 1</div>
+        <div class="layer-title">C2PA Provenance</div>
+        <div class="layer-desc">Checks for a cryptographic certificate embedded at the moment of capture. If valid, the chain of custody is intact and origin is confirmed.</div>
+        <span class="layer-exit">✓ If verified — analysis complete</span>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-num">Layer 2</div>
+        <div class="layer-title">Metadata Forensics</div>
+        <div class="layer-desc">Reads EXIF data — camera model, GPS, timestamp, software field. Stripped or inconsistent metadata is a strong risk indicator.</div>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-num">Layer 3</div>
+        <div class="layer-title">Origin Tracing</div>
+        <div class="layer-desc">Reverse image and video search to find where this content first appeared online, who published it, and when. Misattribution is a form of misinformation.</div>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-num">Layer 4</div>
+        <div class="layer-title">Pixel & Signal Analysis</div>
+        <div class="layer-desc">Runs the media through leading AI detection APIs that identify GAN fingerprints, compression anomalies, facial inconsistencies, and generation artifacts.</div>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-num">Layer 5</div>
+        <div class="layer-title">LLM Consensus</div>
+        <div class="layer-desc">Multiple AI models independently reason over the evidence collected. Not a guess — a jury. All three must agree before high confidence is reported.</div>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-num">Layer 6</div>
+        <div class="layer-title">Context & Credibility</div>
+        <div class="layer-desc">Evaluates source reputation, publication history, and surrounding context. A real image used deceptively is still misinformation.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- REPORT PREVIEW -->
+<section class="section">
+  <div class="section-inner">
+    <p class="section-label">The Output</p>
+    <h2>A report you can actually use.</h2>
+    <p class="section-body">
+      Not a score you have to explain. A professional document with evidence — shareable, exportable as PDF, and citable in editorial decisions, legal filings, and investigations.
+    </p>
+
+    <div class="report-preview">
+      <div class="report-header">
+        <div>
+          <div class="report-title">TRST Authenticity Report</div>
+          <div style="font-size:0.75rem;color:#a3a3a3;margin-top:0.25rem;">Analyzed June 14, 2026 · Image file</div>
+        </div>
+        <div class="report-score">
+          <div class="score-num">18</div>
+          <div class="score-label">Trust Score / 100</div>
+        </div>
+      </div>
+
+      <div class="report-row">
+        <div class="report-layer">C2PA</div>
+        <div class="report-finding">No cryptographic provenance certificate found</div>
+        <div class="report-status status-high">Not Found</div>
+      </div>
+
+      <div class="report-row">
+        <div class="report-layer">Metadata</div>
+        <div class="report-finding">EXIF data stripped. Software field absent. No camera signature.</div>
+        <div class="report-status status-high">Stripped</div>
+      </div>
+
+      <div class="report-row">
+        <div class="report-layer">Origin</div>
+        <div class="report-finding">First appearance: Telegram channel, 48 hours ago. No earlier source found.</div>
+        <div class="report-status status-med">Unverified</div>
+      </div>
+
+      <div class="report-row">
+        <div class="report-layer">Detection</div>
+        <div class="report-finding">Sightengine: 91% probability AI-generated. GAN artifacts detected in background regions.</div>
+        <div class="report-status status-high">High Risk</div>
+      </div>
+
+      <div class="report-row">
+        <div class="report-layer">LLM Consensus</div>
+        <div class="report-finding">Claude, GPT-4o, Gemini — all three independently flag as synthetic. High agreement.</div>
+        <div class="report-status status-high">Flagged</div>
+      </div>
+
+      <div class="report-row">
+        <div class="report-layer">Context</div>
+        <div class="report-finding">Source account created 6 days ago. No publication history. Pattern consistent with influence operations.</div>
+        <div class="report-status status-high">Suspicious</div>
+      </div>
+
+      <div class="report-conclusion">
+        ⚠ High probability this content is synthetic or manipulated. TRST does not recommend publishing without independent verification from a primary source.
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- WHO IT'S FOR -->
+<section class="section">
+  <div class="section-inner">
+    <p class="section-label">Who It's For</p>
+    <h2>Built for professionals<br />who can't afford to be wrong.</h2>
+
+    <div class="who-grid">
+      <div class="who-card">
+        <div class="who-icon">📰</div>
+        <div class="who-title">Investigative Journalists</div>
+        <div class="who-desc">Verify sources before publishing. Attach the TRST report to your editorial file.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-icon">⚖️</div>
+        <div class="who-title">Legal Professionals</div>
+        <div class="who-desc">Generate a documented authenticity assessment for digital evidence in court.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-icon">🔍</div>
+        <div class="who-title">Fact-Checkers</div>
+        <div class="who-desc">Go beyond reverse image search. Get a full forensic breakdown in seconds.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-icon">🛡️</div>
+        <div class="who-title">Insurance Investigators</div>
+        <div class="who-desc">Detect fraudulent claim images and document the analysis for your file.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-icon">🏛️</div>
+        <div class="who-title">Government & Policy</div>
+        <div class="who-desc">Identify influence operations and synthetic media campaigns at scale.</div>
+      </div>
+      <div class="who-card">
+        <div class="who-icon">🎓</div>
+        <div class="who-title">Researchers</div>
+        <div class="who-desc">Standardized authenticity framework for academic and institutional work.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- MANIFESTO -->
+<section class="section manifesto">
+  <div class="section-inner">
+    <p class="section-label">Our Position</p>
+    <h2>We don't claim to detect every fake.<br />We help you decide what to trust.</h2>
+    <p class="manifesto-body">
+      Every AI detector will eventually be defeated by a better generator. That arms race has no finish line.<br /><br />
+      <strong>TRST is not a detector. It's a framework.</strong><br /><br />
+      We combine provenance, forensics, detection signals, and expert reasoning into a single transparent report — and we show our work. Every finding is documented. Every signal is explained. No black boxes.<br /><br />
+      Our mission is to <strong>increase confidence in digital information without claiming certainty</strong> — because certainty is what gets you sued, and transparency is what gets you trusted.
+    </p>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="early-access">
+  <div class="section-inner" style="max-width:580px;margin:0 auto;">
+    <p class="section-label" style="text-align:center;">Early Access</p>
+    <h2>Be among the first<br />to use TRST.</h2>
+    <p>We're onboarding a small group of journalists, fact-checkers, and investigators for our private beta. Free access. Real feedback. Real impact.</p>
+
+    <form class="waitlist-form" id="waitlistForm2" style="max-width:100%;">
+      <input
+        type="email"
+        placeholder="your@email.com"
+        required
+        id="emailInput2"
+        autocomplete="email"
+      />
+      <button type="submit">Request Access</button>
+    </form>
+    <p class="form-note">No spam. No credit card. Just early access.</p>
+    <p class="success-msg" id="successMsg2">✓ You're on the list. We'll reach out within 48 hours.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 TRST · <a href="mailto:hello@trst.center">hello@trst.center</a> · Building the trust layer for the internet.</p>
+</footer>
+
 <script>
-document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',function(e){const t=document.querySelector(this.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}})});
-function hw(fId,iId,mId){const f=document.getElementById(fId),i=document.getElementById(iId),m=document.getElementById(mId);f.addEventListener('submit',async function(e){e.preventDefault();const email=i.value.trim();if(!email)return;const b=f.querySelector('button');b.textContent='Sending...';b.disabled=true;try{const r=await fetch('https://formspree.io/f/mykaonbk',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({email,source:'trst.center waitlist',date:new Date().toISOString()})});if(r.ok){f.style.display='none';m.style.display='block'}else throw new Error()}catch(err){f.style.display='none';m.style.display='block'}b.textContent='Request Access';b.disabled=false})}
-hw('wf1','ei1','sm1');hw('wf2','ei2','sm2');
+  // Smooth scroll for nav CTA
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // Waitlist form handler — replace ACTION_URL with your Formspree or similar endpoint
+  function handleWaitlist(formId, inputId, msgId) {
+    const form = document.getElementById(formId);
+    const input = document.getElementById(inputId);
+    const msg = document.getElementById(msgId);
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = input.value.trim();
+      if (!email) return;
+
+      const btn = form.querySelector('button');
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+
+      try {
+        // Replace with your Formspree endpoint: https://formspree.io/f/YOUR_ID
+        // Or any other form backend
+        const res = await fetch('https://formspree.io/f/mykaonbk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ email, source: 'trst.center waitlist', date: new Date().toISOString() })
+        });
+
+        if (res.ok) {
+          form.style.display = 'none';
+          msg.style.display = 'block';
+        } else {
+          throw new Error('Form error');
+        }
+      } catch(err) {
+        // Fallback: open mailto
+        window.location.href = `mailto:hello@trst.center?subject=TRST Early Access&body=Please add me to the waitlist: ${email}`;
+        form.style.display = 'none';
+        msg.style.display = 'block';
+      }
+
+      btn.textContent = 'Request Access';
+      btn.disabled = false;
+    });
+  }
+
+  handleWaitlist('waitlistForm', 'emailInput', 'successMsg');
+  handleWaitlist('waitlistForm2', 'emailInput2', 'successMsg2');
 </script>
+
 </body>
 </html>
