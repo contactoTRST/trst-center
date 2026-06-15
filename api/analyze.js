@@ -80,7 +80,7 @@ async function checkOrigin() {
   };
 }
 
-// ─── LAYER 4: AI Detection ───────────────────────────────────────────────────
+// ─── LAYER 4: AI Detection ────────────────────────────────────────────────────
 async function checkDetection(filePath) {
   return {
     active: false,
@@ -94,20 +94,18 @@ async function checkDetection(filePath) {
   };
 }
 
-// ─── LAYER 5: LLM Consensus ──────────────────────────────────────────────────
+// ─── LAYER 5: LLM Consensus (OpenAI GPT-4o) ──────────────────────────────────
 async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.OPENAI_API_KEY) {
     return {
       active: false,
       risk: "not_configured",
       verdict: null,
       reasoning: null,
-      detail: "ANTHROPIC_API_KEY not set",
+      detail: "OPENAI_API_KEY not set",
     };
   }
   try {
-    const Anthropic = (await import("@anthropic-ai/sdk")).default;
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const fs = (await import("fs")).default;
     const path = (await import("path")).default;
     const imageBuffer = fs.readFileSync(filePath);
@@ -116,20 +114,39 @@ async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
     const mediaType =
       ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
       ext === "png" ? "image/png" : "image/jpeg";
+
     const evidence = `Metadata: ${metadataResult.detail} (${metadataResult.risk} risk). Detection: ${detectionResult.detail}.`;
-    const prompt = `You are a forensic media authenticity analyst. Analyze this image for signs of AI generation or manipulation.\nEvidence from other layers: ${evidence}\nRespond in JSON: {"verdict": "authentic"|"likely_authentic"|"uncertain"|"likely_synthetic"|"synthetic","confidence":0-100,"flags":[],"reasoning":"2-3 sentences"}`;
-    const response = await anthropic.messages.create({
-      model: "claude-opus-4-5",
-      max_tokens: 500,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-          { type: "text", text: prompt },
-        ],
-      }],
+    const prompt = `You are a forensic media authenticity analyst. Analyze this image for signs of AI generation or manipulation.\nEvidence from other layers: ${evidence}\nRespond in JSON only: {"verdict": "authentic"|"likely_authentic"|"uncertain"|"likely_synthetic"|"synthetic","confidence":0-100,"flags":[],"reasoning":"2-3 sentences"}`;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        max_tokens: 500,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:${mediaType};base64,${base64}` },
+            },
+            { type: "text", text: prompt },
+          ],
+        }],
+      }),
     });
-    const text = response.content[0].text;
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`OpenAI API error ${response.status}: ${err}`);
+    }
+
+    const json = await response.json();
+    const text = json.choices?.[0]?.message?.content || "";
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON in response");
     const p = JSON.parse(match[0]);
@@ -147,7 +164,7 @@ async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
       confidence: p.confidence,
       flags: p.flags || [],
       reasoning: p.reasoning,
-      detail: `Claude: ${p.verdict} (${p.confidence}% confidence). ${p.reasoning}`,
+      detail: `GPT-4o: ${p.verdict} (${p.confidence}% confidence). ${p.reasoning}`,
     };
   } catch (e) {
     return {
@@ -160,7 +177,7 @@ async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
   }
 }
 
-// ─── LAYER 6: Context ────────────────────────────────────────────────────────
+// ─── LAYER 6: Context ─────────────────────────────────────────────────────────
 async function checkContext(filename) {
   return {
     active: false,
@@ -170,7 +187,7 @@ async function checkContext(filename) {
   };
 }
 
-// ─── Scoring ─────────────────────────────────────────────────────────────────
+// ─── Scoring ──────────────────────────────────────────────────────────────────
 function calculateTrustScore(layers) {
   if (layers.c2pa.valid) return 95;
   const weights = { metadata: 15, origin: 15, detection: 20, llm: 25, context: 10 };
@@ -198,7 +215,7 @@ function scoreToVerdict(score) {
   return { label: "Very Low Trust", color: "red", recommendation: "High probability of synthetic content. TRST does not recommend publishing." };
 }
 
-// ─── Handler ─────────────────────────────────────────────────────────────────
+// ─── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   const { default: formidable } = await import("formidable");
