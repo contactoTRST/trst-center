@@ -1,0 +1,13 @@
+{
+  "name": "trst-center",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "formidable": "^3.5.1"
+  },
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}
