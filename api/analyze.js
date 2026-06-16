@@ -94,22 +94,26 @@ async function checkDetection(filePath) {
   }
   try {
     const fs = (await import("fs")).default;
-    const FormData = (await import("form-data")).default;
-    const form = new FormData();
-    form.append("media", fs.createReadStream(filePath));
-    form.append("models", "genai");
-    form.append("api_user", user);
-    form.append("api_secret", secret);
-    const response = await fetch("https://api.sightengine.com/1.0/check.json", {
-      method: "POST",
-      body: form,
-      headers: form.getHeaders(),
+    const path = (await import("path")).default;
+    // Read image and send as base64 via URL-encoded form — avoids form-data multipart issues on Vercel
+    const imageBuffer = fs.readFileSync(filePath);
+    const base64 = imageBuffer.toString("base64");
+    const ext = path.extname(filePath).toLowerCase().replace(".", "");
+    const mediaType = ext === "png" ? "image/png" : "image/jpeg";
+    const dataUrl = `data:${mediaType};base64,${base64}`;
+    const params = new URLSearchParams({
+      models: "genai",
+      api_user: user,
+      api_secret: secret,
+      url: dataUrl,
     });
+    const response = await fetch("https://api.sightengine.com/1.0/check.json?" + params.toString());
     if (!response.ok) {
       const err = await response.text();
       throw new Error(`Sightengine error ${response.status}: ${err}`);
     }
     const data = await response.json();
+    if (data.status === "failure") throw new Error(JSON.stringify(data.error));
     const aiScore = data?.type?.ai_generated ?? null;
     if (aiScore === null) throw new Error("No ai_generated score in response");
     const risk = aiScore >= 0.7 ? "high" : aiScore >= 0.4 ? "medium" : "low";
