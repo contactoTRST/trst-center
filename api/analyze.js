@@ -112,7 +112,7 @@ async function checkDetection(filePath) {
     const blob = new Blob([imageBuffer], { type: mediaType });
     const form = new FormData();
     form.append("media", blob, path.basename(filePath));
-    form.append("models", "genai");
+    form.append("models", "genai,manipulation");
     form.append("api_user", user);
     form.append("api_secret", secret);
     const response = await fetch("https://api.sightengine.com/1.0/check.json", {
@@ -125,18 +125,43 @@ async function checkDetection(filePath) {
     }
     const data = await response.json();
     if (data.status === "failure") throw new Error(JSON.stringify(data.error));
+
+    // AI generation score (0–1)
     const aiScore = data?.type?.ai_generated ?? null;
-    if (aiScore === null) throw new Error("No ai_generated score in response");
-    const risk = aiScore >= 0.7 ? "high" : aiScore >= 0.4 ? "medium" : "low";
-    const pct = Math.round(aiScore * 100);
+    // Manipulation score (0–1) — splicing, copy-move, pixel editing
+    const manipScore = data?.media?.manipulation ?? null;
+
+    // Determine risk from whichever signal is strongest
+    const maxScore = Math.max(aiScore ?? 0, manipScore ?? 0);
+    const risk = maxScore >= 0.7 ? "high" : maxScore >= 0.4 ? "medium" : "low";
+
+    // Determine primary threat type for the detail label
+    const aiPct = aiScore !== null ? Math.round(aiScore * 100) : null;
+    const manipPct = manipScore !== null ? Math.round(manipScore * 100) : null;
+    const parts = [];
+    if (aiPct !== null) parts.push(`${aiPct}% AI-generated`);
+    if (manipPct !== null) parts.push(`${manipPct}% manipulated`);
+    const detailStr = parts.length ? `Sightengine: ${parts.join(", ")}` : "Sightengine: no score returned";
+
+    // Threat type classification
+    let threatType = "none";
+    if ((manipScore ?? 0) >= 0.4 && (manipScore ?? 0) > (aiScore ?? 0)) threatType = "manipulated";
+    else if ((aiScore ?? 0) >= 0.4) threatType = "ai_generated";
+
     return {
       active: true,
       risk,
+      threatType,
       results: {
-        sightengine: { ai_generated: aiScore, score: pct },
+        sightengine: {
+          ai_generated: aiScore,
+          manipulation: manipScore,
+          ai_pct: aiPct,
+          manip_pct: manipPct,
+        },
       },
-      avgScore: aiScore,
-      detail: `Sightengine: ${pct}% probability AI-generated`,
+      avgScore: maxScore,
+      detail: detailStr,
     };
   } catch (e) {
     return {
@@ -170,8 +195,8 @@ async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
       ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
       ext === "png" ? "image/png" : "image/jpeg";
 
-    const evidence = `Metadata: ${metadataResult.detail} (${metadataResult.risk} risk). Detection: ${detectionResult.detail}.`;
-    const prompt = `You are a forensic media authenticity analyst. Analyze this image for signs of AI generation or manipulation.\nEvidence from other layers: ${evidence}\nRespond in JSON only: {"verdict": "authentic"|"likely_authentic"|"uncertain"|"likely_synthetic"|"synthetic","confidence":0-100,"flags":[],"reasoning":"2-3 sentences"}`;
+    const evidence = `Metadata: ${metadataResult.detail} (${metadataResult.risk} risk). Detection: ${detectionResult.detail}. Detected threat type: ${detectionResult.threatType ?? "unknown"}.`;
+    const prompt = `You are a forensic media authenticity analyst. Analyze this image for signs of AI generation OR digital manipulation (splicing, compositing, retouching, object removal/addition).\nEvidence from other layers: ${evidence}\nRespond in JSON only: {"verdict": "authentic"|"likely_authentic"|"uncertain"|"manipulated"|"likely_synthetic"|"synthetic","confidence":0-100,"flags":[],"reasoning":"2-3 sentences"}`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -209,6 +234,7 @@ async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
       authentic: "low",
       likely_authentic: "low",
       uncertain: "medium",
+      manipulated: "high",
       likely_synthetic: "high",
       synthetic: "high",
     };
@@ -258,16 +284,27 @@ function calculateTrustScore(layers) {
   return Math.max(0, Math.min(100, Math.round(100 - (totalP / totalW) * 100)));
 }
 
-function scoreToVerdict(score) {
+function scoreToVerdict(score, layers) {
   if (score === null) return {
     label: "Insufficient Data",
     color: "gray",
     recommendation: "Not enough layers ran to produce a trust score. Configure additional API keys.",
   };
+  // Check if manipulation was the primary threat signal
+  const llmVerdict = layers?.llm?.verdict;
+  const detectionThreat = layers?.detection?.threatType;
+  const isManipulation = llmVerdict === "manipulated" || detectionThreat === "manipulated";
+
   if (score >= 80) return { label: "High Trust", color: "green", recommendation: "Strong authenticity signals. Suitable for publication with standard editorial review." };
-  if (score >= 60) return { label: "Moderate Trust", color: "yellow", recommendation: "Some uncertainty. Additional verification recommended." };
-  if (score >= 40) return { label: "Low Trust", color: "orange", recommendation: "Multiple risk signals. Do not publish without independent verification." };
-  return { label: "Very Low Trust", color: "red", recommendation: "High probability of synthetic content. TRST does not recommend publishing." };
+  if (score >= 60) {
+    if (isManipulation) return { label: "Possible Manipulation", color: "orange", recommendation: "Image appears real in origin but shows signs of digital manipulation. Independent verification strongly recommended before publication." };
+    return { label: "Moderate Trust", color: "yellow", recommendation: "Some uncertainty. Additional verification recommended." };
+  }
+  if (score >= 40) {
+    if (isManipulation) return { label: "Likely Manipulated", color: "red", recommendation: "Strong signals of digital manipulation. Real photo origin likely, but content may have been altered. Do not publish without verification." };
+    return { label: "Low Trust", color: "orange", recommendation: "Multiple risk signals. Do not publish without independent verification." };
+  }
+  return { label: "Very Low Trust", color: "red", recommendation: "High probability of synthetic or heavily manipulated content. TRST does not recommend publishing." };
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -305,7 +342,7 @@ export default async function handler(req, res) {
     const context = await checkContext(file.originalFilename);
     const layers = { c2pa, metadata, origin, detection, llm, context };
     const trustScore = calculateTrustScore(layers);
-    const verdict = scoreToVerdict(trustScore);
+    const verdict = scoreToVerdict(trustScore, layers);
     try { fs.unlinkSync(filePath); } catch (_) {}
     return res.status(200).json({
       trustScore,
