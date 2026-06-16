@@ -21,9 +21,13 @@ async function checkC2PA(filePath) {
 // ─── LAYER 2: Metadata Forensics ─────────────────────────────────────────────
 async function checkMetadata(filePath) {
   try {
-    const { execSync } = await import("child_process");
-    const raw = execSync(`exiftool -json -a -u "${filePath}" 2>/dev/null`, { timeout: 8000 });
-    const data = JSON.parse(raw.toString())[0] || {};
+    const { parse } = await import("exifr");
+    const fs = (await import("fs")).default;
+    const buffer = fs.readFileSync(filePath);
+    const data = await parse(buffer, {
+      pick: ["Make", "Model", "Software", "DateTimeOriginal", "GPSLatitude", "GPSLongitude", "GPSLatitudeRef", "GPSLongitudeRef"],
+      translateValues: true,
+    }) || {};
     const flags = [];
     const info = {};
     if (data.Make || data.Model) {
@@ -31,21 +35,25 @@ async function checkMetadata(filePath) {
     } else {
       flags.push("No camera make/model");
     }
-    if (data.GPSLatitude) {
+    if (data.GPSLatitude != null) {
       info.gps = `${data.GPSLatitude}, ${data.GPSLongitude}`;
     }
     if (data.DateTimeOriginal) {
-      info.timestamp = data.DateTimeOriginal;
+      info.timestamp = data.DateTimeOriginal.toISOString ? data.DateTimeOriginal.toISOString() : String(data.DateTimeOriginal);
     } else {
       flags.push("No original timestamp");
     }
     if (data.Software) {
       info.software = data.Software;
+      const aiTools = ["adobe firefly", "midjourney", "dall-e", "stable diffusion", "gemini", "openai", "generative"];
+      if (aiTools.some(t => data.Software.toLowerCase().includes(t))) {
+        flags.push(`AI tool detected in Software field: ${data.Software}`);
+      }
     } else {
       flags.push("Software field absent");
     }
     const fieldCount = Object.keys(data).length;
-    if (fieldCount < 5) {
+    if (fieldCount < 3) {
       flags.push("EXIF data appears stripped or minimal");
     }
     const risk = flags.length >= 2 ? "high" : flags.length === 1 ? "medium" : "low";
@@ -58,13 +66,12 @@ async function checkMetadata(filePath) {
       detail: flags.length ? flags.join(". ") : "Metadata appears intact",
     };
   } catch (e) {
-    // Extraction failed — cannot assess this layer, treat as not_found (inactive)
     return {
       active: false,
       risk: "not_found",
       flags: [],
       info: {},
-      detail: "Metadata extraction failed",
+      detail: `Metadata extraction failed: ${e.message}`,
     };
   }
 }
@@ -96,7 +103,6 @@ async function checkDetection(filePath) {
   try {
     const fs = (await import("fs")).default;
     const path = (await import("path")).default;
-    // Direct multipart upload using native Node 18 FormData + Blob (no npm form-data package)
     const imageBuffer = fs.readFileSync(filePath);
     const ext = path.extname(filePath).toLowerCase().replace(".", "");
     const mediaType = ext === "png" ? "image/png" : "image/jpeg";
@@ -176,33 +182,22 @@ async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
         messages: [{
           role: "user",
           content: [
-            {
-              type: "image_url",
-              image_url: { url: `data:${mediaType};base64,${base64}` },
-            },
+            { type: "image_url", image_url: { url: `data:${mediaType};base64,${base64}` } },
             { type: "text", text: prompt },
           ],
         }],
       }),
     });
-
     if (!response.ok) {
       const err = await response.text();
       throw new Error(`OpenAI API error ${response.status}: ${err}`);
     }
-
     const json = await response.json();
     const text = json.choices?.[0]?.message?.content || "";
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error("No JSON in response");
     const p = JSON.parse(match[0]);
-    const riskMap = {
-      authentic: "low",
-      likely_authentic: "low",
-      uncertain: "medium",
-      likely_synthetic: "high",
-      synthetic: "high",
-    };
+    const riskMap = { authentic: "low", likely_authentic: "low", uncertain: "medium", likely_synthetic: "high", synthetic: "high" };
     return {
       active: true,
       risk: riskMap[p.verdict] || "medium",
@@ -213,24 +208,13 @@ async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
       detail: `GPT-4o: ${p.verdict} (${p.confidence}% confidence). ${p.reasoning}`,
     };
   } catch (e) {
-    return {
-      active: false,
-      risk: "not_configured",
-      verdict: null,
-      reasoning: null,
-      detail: `LLM error: ${e.message}`,
-    };
+    return { active: false, risk: "not_configured", verdict: null, reasoning: null, detail: `LLM error: ${e.message}` };
   }
 }
 
 // ─── LAYER 6: Context ─────────────────────────────────────────────────────────
 async function checkContext(filename) {
-  return {
-    active: false,
-    risk: "not_configured",
-    detail: "Context analysis not yet configured",
-    filename,
-  };
+  return { active: false, risk: "not_configured", detail: "Context analysis not yet configured", filename };
 }
 
 // ─── Scoring ──────────────────────────────────────────────────────────────────
@@ -241,20 +225,16 @@ function calculateTrustScore(layers) {
   let totalW = 0, totalP = 0;
   for (const [k, w] of Object.entries(weights)) {
     const layer = layers[k];
-    if (!layer?.active) continue; // skip unconfigured / failed layers
+    if (!layer?.active) continue;
     totalW += w;
     totalP += w * (penalties[layer.risk] ?? 0.5);
   }
-  if (totalW === 0) return null; // no active layers — insufficient data
+  if (totalW === 0) return null;
   return Math.max(0, Math.min(100, Math.round(100 - (totalP / totalW) * 100)));
 }
 
 function scoreToVerdict(score) {
-  if (score === null) return {
-    label: "Insufficient Data",
-    color: "gray",
-    recommendation: "Not enough layers ran to produce a trust score. Configure additional API keys.",
-  };
+  if (score === null) return { label: "Insufficient Data", color: "gray", recommendation: "Not enough layers ran to produce a trust score. Configure additional API keys." };
   if (score >= 80) return { label: "High Trust", color: "green", recommendation: "Strong authenticity signals. Suitable for publication with standard editorial review." };
   if (score >= 60) return { label: "Moderate Trust", color: "yellow", recommendation: "Some uncertainty. Additional verification recommended." };
   if (score >= 40) return { label: "Low Trust", color: "orange", recommendation: "Multiple risk signals. Do not publish without independent verification." };
@@ -280,15 +260,7 @@ export default async function handler(req, res) {
     const c2pa = await checkC2PA(filePath);
     if (c2pa.valid) {
       fs.unlinkSync(filePath);
-      return res.status(200).json({
-        trustScore: 95,
-        verdict: { label: "High Trust", color: "green", recommendation: "Valid C2PA certificate." },
-        earlyExit: true,
-        exitLayer: 1,
-        layers: { c2pa },
-        analyzedAt: new Date().toISOString(),
-        filename: file.originalFilename,
-      });
+      return res.status(200).json({ trustScore: 95, verdict: { label: "High Trust", color: "green", recommendation: "Valid C2PA certificate." }, earlyExit: true, exitLayer: 1, layers: { c2pa }, analyzedAt: new Date().toISOString(), filename: file.originalFilename });
     }
     const [metadata, origin] = await Promise.all([checkMetadata(filePath), checkOrigin()]);
     const detection = await checkDetection(filePath);
@@ -298,14 +270,7 @@ export default async function handler(req, res) {
     const trustScore = calculateTrustScore(layers);
     const verdict = scoreToVerdict(trustScore);
     try { fs.unlinkSync(filePath); } catch (_) {}
-    return res.status(200).json({
-      trustScore,
-      verdict,
-      earlyExit: false,
-      layers,
-      analyzedAt: new Date().toISOString(),
-      filename: file.originalFilename,
-    });
+    return res.status(200).json({ trustScore, verdict, earlyExit: false, layers, analyzedAt: new Date().toISOString(), filename: file.originalFilename });
   } catch (e) {
     try { fs.unlinkSync(filePath); } catch (_) {}
     return res.status(500).json({ error: "Analysis failed: " + e.message });
