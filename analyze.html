@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>TRST — Analyze</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--black:#0a0a0a;--white:#fff;--gray-100:#f5f5f5;--gray-200:#e5e5e5;--gray-400:#a3a3a3;--gray-600:#525252;--gray-800:#262626;--accent:#1a56db;--accent-light:#eff6ff;--green:#16a34a;--yellow:#ca8a04;--orange:#ea580c;--red:#dc2626;--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
@@ -99,7 +100,11 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .badge-gray{background:var(--gray-100);color:var(--gray-600)}
 
 .report-footer{padding:1.25rem 2rem;background:var(--gray-100);font-size:.8rem;color:var(--gray-400);display:flex;align-items:center;justify-content:space-between}
-.new-analysis-btn{background:var(--black);color:var(--white);border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer;margin-top:1.5rem;display:none}
+.report-actions{display:none;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap}
+.new-analysis-btn,.pdf-btn{border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer}
+.new-analysis-btn{background:var(--black);color:var(--white)}
+.pdf-btn{background:var(--gray-100);color:var(--black);border:1px solid var(--gray-200)}
+.pdf-btn:hover{background:var(--gray-200)}
 
 /* Error */
 .error-box{display:none;margin-top:1.5rem;padding:1rem 1.25rem;background:#fef2f2;border-radius:8px;color:#b91c1c;font-size:.875rem}
@@ -178,7 +183,10 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
     </div>
   </div>
 
-  <button class="new-analysis-btn" id="newBtn">Analyze Another Image</button>
+  <div class="report-actions" id="reportActions">
+    <button class="pdf-btn" id="pdfBtn">Download PDF Report</button>
+    <button class="new-analysis-btn" id="newBtn">Analyze Another Image</button>
+  </div>
 </main>
 
 <script>
@@ -189,10 +197,13 @@ const previewImg = document.getElementById('previewImg');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const progressSection = document.getElementById('progressSection');
 const reportSection = document.getElementById('reportSection');
+const reportActions = document.getElementById('reportActions');
 const errorBox = document.getElementById('errorBox');
 const newBtn = document.getElementById('newBtn');
+const pdfBtn = document.getElementById('pdfBtn');
 
 let selectedFile = null;
+let lastReportData = null;
 
 // Drag and drop
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
@@ -242,7 +253,7 @@ analyzeBtn.addEventListener('click', async () => {
   if (!selectedFile) return;
   errorBox.style.display = 'none';
   reportSection.style.display = 'none';
-  newBtn.style.display = 'none';
+  reportActions.style.display = 'none';
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = 'Analyzing…';
   progressSection.style.display = 'block';
@@ -299,7 +310,6 @@ function renderAssetType(metadata) {
 
   const assetType = metadata?.assetType;
   if (!assetType || assetType === 'original') {
-    // Only show banner for non-original
     if (assetType === 'original') {
       banner.style.display = 'flex';
       banner.className = 'asset-type-banner original';
@@ -341,12 +351,10 @@ function renderCaptureCoherence(llm) {
   const badge = document.getElementById('coherenceBadge');
   const explanation = document.getElementById('coherenceExplanation');
 
-  // Derive coherence state from LLM verdict + flags
   const verdict = llm.verdict;
   const flags = llm.flags || [];
-  const reasoning = llm.reasoning || '';
 
-  // Look for coherence-related signals in flags
+  // Coherence-relevant flag keywords
   const coherenceFlags = flags.filter(f => {
     const fl = f.toLowerCase();
     return fl.includes('noise') || fl.includes('grain') || fl.includes('lighting') ||
@@ -357,49 +365,42 @@ function renderCaptureCoherence(llm) {
            fl.includes('background') || fl.includes('lens');
   });
 
-  let coherenceState, badgeText;
+  let coherenceState, badgeText, summaryText;
 
   if (verdict === 'authentic' || verdict === 'likely_authentic') {
     coherenceState = 'coherent';
     badgeText = 'Coherent';
+    summaryText = coherenceFlags.length > 0
+      ? `GPT-4o found the image consistent with a single photographic capture, though noted: ${coherenceFlags.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('; ')}.`
+      : 'GPT-4o found no signs of manipulation. Edges, noise, lighting, and depth of field appear consistent across the image.';
   } else if (verdict === 'manipulated') {
     coherenceState = 'incoherent';
     badgeText = 'Incoherent';
+    summaryText = coherenceFlags.length > 0
+      ? `GPT-4o identified incoherence signals: ${coherenceFlags.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('; ')}. Elements appear to originate from different sources.`
+      : 'GPT-4o detected signs of manipulation — elements do not appear to originate from a single photographic capture.';
   } else if (verdict === 'synthetic') {
     coherenceState = 'incoherent';
     badgeText = 'Not Applicable — Fully Synthetic';
+    summaryText = 'GPT-4o assessed this as a fully AI-generated image. Capture Coherence does not apply to synthetic content.';
   } else if (verdict === 'likely_synthetic') {
     coherenceState = 'partial';
     badgeText = 'Uncertain — Likely Synthetic';
+    summaryText = 'GPT-4o found characteristics consistent with AI generation. Capture coherence is uncertain.';
   } else {
     coherenceState = 'uncertain';
     badgeText = 'Uncertain';
+    summaryText = 'Insufficient forensic signals to assess capture coherence.';
   }
 
   badge.className = `coherence-badge ${coherenceState}`;
   badge.textContent = badgeText;
-
-  // Build explanation from reasoning + coherence flags
-  let explanationHTML = '';
-  if (reasoning) {
-    explanationHTML += reasoning;
-  }
-  if (coherenceFlags.length > 0) {
-    explanationHTML += (reasoning ? ' ' : '') + '<br><strong>Coherence signals detected:</strong> ' +
-      coherenceFlags.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('; ') + '.';
-  }
-  if (!explanationHTML) {
-    if (coherenceState === 'coherent') {
-      explanationHTML = 'No incoherence signals detected. Visible elements appear consistent with a single photographic capture.';
-    } else {
-      explanationHTML = 'Insufficient forensic signals to assess capture coherence.';
-    }
-  }
-  explanation.innerHTML = explanationHTML;
+  explanation.textContent = summaryText;
 }
 
 function renderReport(data) {
   progressSection.style.display = 'none';
+  lastReportData = data;
 
   const score = data.trustScore;
   const verdict = data.verdict;
@@ -414,10 +415,7 @@ function renderReport(data) {
 
   const L = data.layers;
 
-  // Asset type banner (from Layer 2)
   renderAssetType(L.metadata);
-
-  // Capture Coherence panel (from Layer 5)
   renderCaptureCoherence(L.llm);
 
   const layerDefs = [
@@ -444,18 +442,143 @@ function renderReport(data) {
   }).join('');
 
   reportSection.style.display = 'block';
-  newBtn.style.display = 'inline-block';
+  reportActions.style.display = 'flex';
   analyzeBtn.textContent = 'Run TRST Analysis';
   reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// --- PDF Generation ---
+pdfBtn.addEventListener('click', () => {
+  if (!lastReportData) return;
+  generatePDF(lastReportData);
+});
+
+function generatePDF(data) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth();
+  const score = data.trustScore;
+  const verdict = data.verdict;
+  const L = data.layers;
+
+  // Color map
+  const colorMap = { green: [22,163,74], yellow: [202,138,4], orange: [234,88,12], red: [220,38,38], gray: [115,115,115] };
+  const vColor = colorMap[verdict.color] || colorMap.gray;
+
+  // Header
+  doc.setFillColor(10,10,10);
+  doc.rect(0, 0, W, 80, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(10); doc.setFont('helvetica','bold');
+  doc.text('TRST AUTHENTICITY REPORT', 40, 30);
+  doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.setTextColor(163,163,163);
+  doc.text(`${data.filename || 'Image'} · ${new Date(data.analyzedAt).toLocaleString()}`, 40, 46);
+
+  // Score
+  doc.setFontSize(36); doc.setFont('helvetica','bold');
+  doc.setTextColor(vColor[0], vColor[1], vColor[2]);
+  doc.text(String(score), W - 40, 48, { align: 'right' });
+  doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.setTextColor(163,163,163);
+  doc.text('TRUST SCORE / 100', W - 40, 64, { align: 'right' });
+
+  // Verdict bar
+  doc.setFillColor(vColor[0], vColor[1], vColor[2]);
+  doc.setGlobalAlpha ? null : null;
+  doc.setFillColor(
+    Math.min(255, vColor[0] + 180),
+    Math.min(255, vColor[1] + 180),
+    Math.min(255, vColor[2] + 180)
+  );
+  doc.rect(0, 80, W, 32, 'F');
+  doc.setTextColor(vColor[0], vColor[1], vColor[2]);
+  doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text(`${verdict.label} — ${verdict.recommendation}`, 40, 101);
+
+  // Layer table
+  let y = 138;
+  doc.setTextColor(100,100,100);
+  doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('EVIDENCE BY LAYER', 40, y);
+  y += 16;
+
+  const layerDefs = [
+    { key: 'c2pa',      num: 'Layer 1', name: 'C2PA Provenance' },
+    { key: 'metadata',  num: 'Layer 2', name: 'Metadata Forensics' },
+    { key: 'origin',    num: 'Layer 3', name: 'Origin Tracing' },
+    { key: 'detection', num: 'Layer 4', name: 'AI Detection APIs' },
+    { key: 'llm',       num: 'Layer 5', name: 'LLM Consensus (GPT-4o)' },
+    { key: 'context',   num: 'Layer 6', name: 'Context & Credibility' },
+  ];
+
+  const badgeColorMap = {
+    'badge-green': [22,163,74], 'badge-yellow': [202,138,4],
+    'badge-orange': [234,88,12], 'badge-red': [220,38,38], 'badge-gray': [115,115,115]
+  };
+  const badgeBgMap = {
+    'badge-green': [240,253,244], 'badge-yellow': [254,252,232],
+    'badge-orange': [255,247,237], 'badge-red': [254,242,242], 'badge-gray': [245,245,245]
+  };
+
+  layerDefs.forEach((ld, idx) => {
+    const risk = L[ld.key]?.risk || 'unknown';
+    const detail = L[ld.key]?.detail || '—';
+    const [badgeClass, badgeLabel] = riskToBadge(risk);
+    const bColor = badgeColorMap[badgeClass] || [115,115,115];
+    const bBg = badgeBgMap[badgeClass] || [245,245,245];
+
+    if (idx % 2 === 0) {
+      doc.setFillColor(250,250,250);
+      doc.rect(0, y - 12, W, 52, 'F');
+    }
+
+    doc.setTextColor(100,100,100);
+    doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text(ld.num.toUpperCase(), 40, y);
+
+    doc.setTextColor(10,10,10);
+    doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text(ld.name, 110, y);
+
+    // Badge
+    const badgeW = doc.getTextWidth(badgeLabel) + 12;
+    doc.setFillColor(bBg[0], bBg[1], bBg[2]);
+    doc.roundedRect(W - 40 - badgeW, y - 10, badgeW, 14, 3, 3, 'F');
+    doc.setTextColor(bColor[0], bColor[1], bColor[2]);
+    doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text(badgeLabel, W - 40 - badgeW/2, y, { align: 'center' });
+
+    // Detail text (wrapped)
+    doc.setTextColor(80,80,80);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    const lines = doc.splitTextToSize(detail, W - 160);
+    doc.text(lines.slice(0,2), 110, y + 14);
+
+    y += 52;
+  });
+
+  // Footer
+  const footY = doc.internal.pageSize.getHeight() - 40;
+  doc.setFillColor(10,10,10);
+  doc.rect(0, footY, W, 40, 'F');
+  doc.setTextColor(163,163,163);
+  doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.text(`Analyzed ${new Date(data.analyzedAt).toLocaleString()}`, 40, footY + 24);
+  doc.text('TRST.center', W - 40, footY + 24, { align: 'right' });
+
+  const filename = `TRST_Report_${(data.filename || 'image').replace(/\.[^.]+$/, '')}_score${score}.pdf`;
+  doc.save(filename);
+}
+
 newBtn.addEventListener('click', () => {
   selectedFile = null;
+  lastReportData = null;
   fileInput.value = '';
   previewBox.style.display = 'none';
   previewImg.src = '';
   reportSection.style.display = 'none';
-  newBtn.style.display = 'none';
+  reportActions.style.display = 'none';
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = 'Run TRST Analysis';
   window.scrollTo({ top: 0, behavior: 'smooth' });
