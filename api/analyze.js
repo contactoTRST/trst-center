@@ -1,130 +1,169 @@
-// TRST.center - Analysis API
-// Vercel Serverless Function
-// POST /api/analyze — accepts multipart image upload, runs 6-layer decision tree
+// TRST.center — Analysis API (clean rewrite)
+// POST /api/analyze — multipart image upload → 6-layer trust score
 
-export const config = {
-  api: { bodyParser: false },
-};
+export const config = { api: { bodyParser: false } };
 
-// ─── LAYER 1: C2PA Provenance ────────────────────────────────────────────────
-async function checkC2PA(filePath) {
-  return { found: false, valid: false, issuer: null, detail: "No C2PA provenance certificate found" };
+// Layer 1: C2PA
+async function checkC2PA() {
+  return { risk: 'unknown', found: false, valid: false, detail: 'No C2PA provenance certificate found' };
 }
 
-// ─── LAYER 2: Metadata Forensics ────────────────────────────────────────────
+// Layer 2: Metadata
 async function checkMetadata(filePath) {
   try {
-    const { execSync } = await import("child_process");
+    const { execSync } = await import('child_process');
     const raw = execSync(`exiftool -json -a -u "${filePath}" 2>/dev/null`, { timeout: 8000 });
     const data = JSON.parse(raw.toString())[0] || {};
     const flags = [];
     const info = {};
-    if (data.Make || data.Model) { info.camera = `${data.Make || ""} ${data.Model || ""}`.trim(); } else { flags.push("No camera make/model"); }
-    if (data.GPSLatitude) { info.gps = `${data.GPSLatitude}, ${data.GPSLongitude}`; }
-    if (data.DateTimeOriginal) { info.timestamp = data.DateTimeOriginal; } else { flags.push("No original timestamp"); }
-    if (data.Software) { info.software = data.Software; } else { flags.push("Software field absent"); }
-    const fieldCount = Object.keys(data).length;
-    if (fieldCount < 5) { flags.push("EXIF data appears stripped or minimal"); }
-    const risk = flags.length >= 2 ? "high" : flags.length === 1 ? "medium" : "low";
-    return { risk, flags, info, fieldCount, detail: flags.length ? flags.join(". ") : "Metadata appears intact" };
+    if (data.Make || data.Model) { info.camera = (data.Make + ' ' + (data.Model || '')).trim(); }
+    else { flags.push('No camera make/model'); }
+    if (data.GPSLatitude) { info.gps = data.GPSLatitude + ', ' + data.GPSLongitude; }
+    if (data.DateTimeOriginal) { info.timestamp = data.DateTimeOriginal; }
+    else { flags.push('No original timestamp'); }
+    if (data.Software) { info.software = data.Software; }
+    else { flags.push('Software field absent'); }
+    if (Object.keys(data).length < 5) { flags.push('EXIF data appears stripped or minimal'); }
+    const risk = flags.length >= 2 ? 'high' : flags.length === 1 ? 'medium' : 'low';
+    return { risk, flags, info, detail: flags.length ? flags.join('. ') : 'Metadata appears intact' };
   } catch (e) {
-    return { risk: "medium", flags: ["Could not read metadata"], info: {}, detail: "Metadata extraction failed" };
+    return { risk: 'medium', flags: ['Could not read metadata'], info: {}, detail: 'Metadata extraction failed' };
   }
 }
 
-// ─── LAYER 3: Origin Tracing ─────────────────────────────────────────────────
+// Layer 3: Origin
 async function checkOrigin() {
-  return { risk: "unknown", earliest_source: null, sources_found: 0, detail: "Origin tracing not yet configured" };
+  return { risk: 'unknown', detail: 'Origin tracing not yet configured' };
 }
 
-// ─── LAYER 4: AI Detection ───────────────────────────────────────────────────
-async function checkDetection(filePath) {
-  const results = { sightengine: { skipped: true, reason: "No API credentials configured" }, hive: { skipped: true, reason: "No API credentials configured" } };
-  return { risk: "unknown", results, avgScore: null, detail: "Detection APIs not yet configured" };
+// Layer 4: Detection
+async function checkDetection() {
+  return { risk: 'unknown', detail: 'Detection APIs not yet configured' };
 }
 
-// ─── LAYER 5: LLM Consensus ──────────────────────────────────────────────────
-async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
+// Layer 5: LLM
+async function checkLLM(filePath, metadata, detection) {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return { risk: "unknown", verdict: null, reasoning: null, detail: "ANTHROPIC_API_KEY not set" };
+    return { risk: 'unknown', active: false, verdict: null, detail: 'ANTHROPIC_API_KEY not configured' };
   }
   try {
-    const Anthropic = (await import("@anthropic-ai/sdk")).default;
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const fs = (await import("fs")).default;
-    const path = (await import("path")).default;
-    const imageBuffer = fs.readFileSync(filePath);
-    const base64 = imageBuffer.toString("base64");
-    const ext = path.extname(filePath).toLowerCase().replace(".", "");
-    const mediaType = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : ext === "png" ? "image/png" : "image/jpeg";
-    const evidence = `Metadata: ${metadataResult.detail} (${metadataResult.risk} risk). Detection: ${detectionResult.detail}.`;
-    const prompt = `You are a forensic media authenticity analyst. Analyze this image for signs of AI generation or manipulation.\nEvidence from other layers: ${evidence}\nRespond in JSON: {"verdict": "authentic"|"likely_authentic"|"uncertain"|"likely_synthetic"|"synthetic","confidence":0-100,"flags":[],"reasoning":"2-3 sentences"}`;
-    const response = await anthropic.messages.create({ model: "claude-opus-4-5", max_tokens: 500, messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } }, { type: "text", text: prompt }] }] });
-    const text = response.content[0].text;
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("No JSON in LLM response");
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const { default: fs } = await import('fs');
+    const { default: path } = await import('path');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const buf = fs.readFileSync(filePath);
+    const b64 = buf.toString('base64');
+    const ext = path.extname(filePath).toLowerCase().slice(1);
+    const mime = (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' : ext === 'png' ? 'image/png' : 'image/webp';
+    const prompt = [
+      'You are a forensic media authenticity analyst.',
+      'Analyze this image for signs of AI generation or manipulation.',
+      'Context: metadata=' + metadata.detail + ', detection=' + detection.detail,
+      'Reply ONLY with valid JSON (no markdown):',
+      '{"verdict":"authentic"|"likely_authentic"|"uncertain"|"likely_synthetic"|"synthetic","confidence":0-100,"flags":["..."],"reasoning":"2-3 sentences"}'
+    ].join('\n');
+    const resp = await client.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 500,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } },
+        { type: 'text', text: prompt }
+      ]}]
+    });
+    const match = resp.content[0].text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON in response');
     const p = JSON.parse(match[0]);
-    const riskMap = { authentic: "low", likely_authentic: "low", uncertain: "medium", likely_synthetic: "high", synthetic: "high" };
-    return { risk: riskMap[p.verdict] || "medium", verdict: p.verdict, confidence: p.confidence, flags: p.flags || [], reasoning: p.reasoning, active: true, detail: `Claude: ${p.verdict} (${p.confidence}% confidence). ${p.reasoning}` };
+    const riskMap = { authentic: 'low', likely_authentic: 'low', uncertain: 'medium', likely_synthetic: 'high', synthetic: 'high' };
+    return {
+      risk: riskMap[p.verdict] || 'medium',
+      active: true,
+      verdict: p.verdict,
+      confidence: p.confidence,
+      flags: p.flags || [],
+      reasoning: p.reasoning,
+      detail: 'Claude verdict: ' + p.verdict + ' (' + p.confidence + '% confidence). ' + p.reasoning
+    };
   } catch (e) {
-    return { risk: "unknown", verdict: null, reasoning: null, active: false, detail: `LLM error: ${e.message}` };
+    return { risk: 'unknown', active: false, verdict: null, detail: 'LLM error: ' + e.message };
   }
 }
 
-// ─── LAYER 6: Context ────────────────────────────────────────────────────────
+// Layer 6: Context
 async function checkContext(filename) {
-  return { risk: "unknown", detail: "Context analysis not yet configured", filename };
+  return { risk: 'unknown', detail: 'Context analysis not yet configured', filename };
 }
 
-// ─── Scoring ─────────────────────────────────────────────────────────────────
-function calculateTrustScore(layers) {
-  if (layers.c2pa.valid) return 95;
+// Scoring
+function calcScore(layers) {
+  if (layers.c2pa && layers.c2pa.valid) return 95;
   const weights = { metadata: 15, origin: 15, detection: 20, llm: 25, context: 10 };
   const penalties = { low: 0, medium: 0.5, high: 1, unknown: 0.3 };
-  let totalW = 0, totalP = 0;
+  let tw = 0, tp = 0;
   for (const [k, w] of Object.entries(weights)) {
-    totalW += w;
-    totalP += w * (penalties[layers[k]?.risk] ?? 0.3);
+    tw += w;
+    tp += w * (penalties[(layers[k] || {}).risk] ?? 0.3);
   }
-  return Math.max(0, Math.min(100, Math.round(100 - (totalP / totalW) * 100)));
+  return Math.max(0, Math.min(100, Math.round(100 - (tp / tw) * 100)));
 }
 
-function scoreToVerdict(s) {
-  if (s >= 80) return { label: "High Trust", color: "green", recommendation: "Strong authenticity signals. Suitable for publication with standard editorial review." };
-  if (s >= 60) return { label: "Moderate Trust", color: "yellow", recommendation: "Some uncertainty. Additional verification recommended." };
-  if (s >= 40) return { label: "Low Trust", color: "orange", recommendation: "Multiple risk signals. Do not publish without independent verification." };
-  return { label: "Very Low Trust", color: "red", recommendation: "High probability of synthetic content. TRST does not recommend publishing." };
+function scoreVerdict(s) {
+  if (s >= 80) return { label: 'High Trust',      color: 'green',  recommendation: 'Strong authenticity signals. Suitable for publication with standard editorial review.' };
+  if (s >= 60) return { label: 'Moderate Trust',  color: 'yellow', recommendation: 'Some uncertainty. Additional verification recommended.' };
+  if (s >= 40) return { label: 'Low Trust',       color: 'orange', recommendation: 'Multiple risk signals. Do not publish without independent verification.' };
+  return           { label: 'Very Low Trust',     color: 'red',    recommendation: 'High probability of synthetic content. TRST does not recommend publishing.' };
 }
 
-// ─── Handler ─────────────────────────────────────────────────────────────────
+// Handler
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  const { default: formidable } = await import("formidable");
-  const form = formidable({ maxFileSize: 20 * 1024 * 1024, keepExtensions: true });
-  let files;
-  try { [, files] = await form.parse(req); }
-  catch (e) { return res.status(400).json({ error: "Could not parse upload: " + e.message }); }
-  const file = files?.image?.[0] || files?.file?.[0];
-  if (!file) return res.status(400).json({ error: "No image file received" });
-  const filePath = file.filepath;
-  const { default: fs } = await import("fs");
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  let filePath = null;
   try {
-    const c2pa = await checkC2PA(filePath);
+    const { default: formidable } = await import('formidable');
+    const form = formidable({ maxFileSize: 20 * 1024 * 1024, keepExtensions: true });
+    const [, files] = await form.parse(req);
+    const file = files?.image?.[0] || files?.file?.[0];
+    if (!file) return res.status(400).json({ error: 'No image file received' });
+    filePath = file.filepath;
+
+    const [c2pa, metadata, origin] = await Promise.all([
+      checkC2PA(),
+      checkMetadata(filePath),
+      checkOrigin(),
+    ]);
+
     if (c2pa.valid) {
-      try { fs.unlinkSync(filePath); } catch (_) {}
-      return res.status(200).json({ trustScore: 95, verdict: { label: "High Trust", color: "green", recommendation: "Valid C2PA certificate." }, earlyExit: true, exitLayer: 1, layers: { c2pa }, analyzedAt: new Date().toISOString(), filename: file.originalFilename });
+      return res.status(200).json({
+        trustScore: 95,
+        verdict: { label: 'High Trust', color: 'green', recommendation: 'Valid C2PA certificate present.' },
+        earlyExit: true,
+        layers: { c2pa, metadata, origin },
+        analyzedAt: new Date().toISOString(),
+        filename: file.originalFilename,
+      });
     }
-    const [metadata, origin] = await Promise.all([checkMetadata(filePath), checkOrigin()]);
-    const detection = await checkDetection(filePath);
-    const llm = await checkLLMConsensus(filePath, metadata, detection);
-    const context = await checkContext(file.originalFilename);
+
+    const detection = await checkDetection();
+    const llm       = await checkLLM(filePath, metadata, detection);
+    const context   = await checkContext(file.originalFilename);
+
     const layers = { c2pa, metadata, origin, detection, llm, context };
-    const trustScore = calculateTrustScore(layers);
-    const verdict = scoreToVerdict(trustScore);
-    try { fs.unlinkSync(filePath); } catch (_) {}
-    return res.status(200).json({ trustScore, verdict, earlyExit: false, layers, analyzedAt: new Date().toISOString(), filename: file.originalFilename });
+    const trustScore = calcScore(layers);
+    const verdict = scoreVerdict(trustScore);
+
+    return res.status(200).json({
+      trustScore, verdict, earlyExit: false,
+      layers, analyzedAt: new Date().toISOString(),
+      filename: file.originalFilename,
+    });
+
   } catch (e) {
-    try { fs.unlinkSync(filePath); } catch (_) {}
-    return res.status(500).json({ error: "Analysis failed: " + e.message });
+    return res.status(500).json({ error: e.message });
+  } finally {
+    if (filePath) {
+      try { const { default: fs } = await import('fs'); fs.unlinkSync(filePath); } catch (_) {}
+    }
   }
 }
