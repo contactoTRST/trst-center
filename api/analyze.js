@@ -96,22 +96,19 @@ async function checkDetection(filePath) {
   try {
     const fs = (await import("fs")).default;
     const path = (await import("path")).default;
-    // Read image and send as base64 via POST body — GET query string hits 414 URI Too Long
+    // Direct multipart upload using native Node 18 FormData + Blob (no npm form-data package)
     const imageBuffer = fs.readFileSync(filePath);
-    const base64 = imageBuffer.toString("base64");
     const ext = path.extname(filePath).toLowerCase().replace(".", "");
     const mediaType = ext === "png" ? "image/png" : "image/jpeg";
-    const dataUrl = `data:${mediaType};base64,${base64}`;
-    const params = new URLSearchParams({
-      models: "genai",
-      api_user: user,
-      api_secret: secret,
-      url: dataUrl,
-    });
+    const blob = new Blob([imageBuffer], { type: mediaType });
+    const form = new FormData();
+    form.append("media", blob, path.basename(filePath));
+    form.append("models", "genai");
+    form.append("api_user", user);
+    form.append("api_secret", secret);
     const response = await fetch("https://api.sightengine.com/1.0/check.json", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params.toString(),
+      body: form,
     });
     if (!response.ok) {
       const err = await response.text();
