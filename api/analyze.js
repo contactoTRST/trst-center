@@ -58,6 +58,7 @@ async function checkMetadata(filePath) {
       detail: flags.length ? flags.join(". ") : "Metadata appears intact",
     };
   } catch (e) {
+    // Extraction failed — cannot assess this layer, treat as not_found (inactive)
     return {
       active: false,
       risk: "not_found",
@@ -79,7 +80,7 @@ async function checkOrigin() {
   };
 }
 
-// ─── LAYER 4: AI Detection (Sightengine) ──────────────────────────────────────
+// ─── LAYER 4: AI Detection (Sightengine) ─────────────────────────────────────
 async function checkDetection(filePath) {
   const user = process.env.SIGHTENGINE_USER;
   const secret = process.env.SIGHTENGINE_SECRET;
@@ -95,7 +96,7 @@ async function checkDetection(filePath) {
   try {
     const fs = (await import("fs")).default;
     const path = (await import("path")).default;
-    // Read image and send as base64 via URL-encoded form — avoids form-data multipart issues on Vercel
+    // Read image and send as base64 via POST body — GET query string hits 414 URI Too Long
     const imageBuffer = fs.readFileSync(filePath);
     const base64 = imageBuffer.toString("base64");
     const ext = path.extname(filePath).toLowerCase().replace(".", "");
@@ -107,7 +108,11 @@ async function checkDetection(filePath) {
       api_secret: secret,
       url: dataUrl,
     });
-    const response = await fetch("https://api.sightengine.com/1.0/check.json?" + params.toString());
+    const response = await fetch("https://api.sightengine.com/1.0/check.json", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
     if (!response.ok) {
       const err = await response.text();
       throw new Error(`Sightengine error ${response.status}: ${err}`);
@@ -239,11 +244,11 @@ function calculateTrustScore(layers) {
   let totalW = 0, totalP = 0;
   for (const [k, w] of Object.entries(weights)) {
     const layer = layers[k];
-    if (!layer?.active) continue;
+    if (!layer?.active) continue; // skip unconfigured / failed layers
     totalW += w;
     totalP += w * (penalties[layer.risk] ?? 0.5);
   }
-  if (totalW === 0) return null;
+  if (totalW === 0) return null; // no active layers — insufficient data
   return Math.max(0, Math.min(100, Math.round(100 - (totalP / totalW) * 100)));
 }
 
