@@ -18,7 +18,7 @@ async function checkC2PA(filePath) {
   };
 }
 
-// ─── LAYER 2: Metadata Forensics ────────────────────────────────────────────
+// ─── LAYER 2: Metadata Forensics ─────────────────────────────────────────────
 async function checkMetadata(filePath) {
   try {
     const { execSync } = await import("child_process");
@@ -58,7 +58,6 @@ async function checkMetadata(filePath) {
       detail: flags.length ? flags.join(". ") : "Metadata appears intact",
     };
   } catch (e) {
-    // Extraction failed — cannot assess this layer, treat as not_found (inactive)
     return {
       active: false,
       risk: "not_found",
@@ -80,21 +79,62 @@ async function checkOrigin() {
   };
 }
 
-// ─── LAYER 4: AI Detection ────────────────────────────────────────────────────
+// ─── LAYER 4: AI Detection (Sightengine) ──────────────────────────────────────
 async function checkDetection(filePath) {
-  return {
-    active: false,
-    risk: "not_configured",
-    results: {
-      sightengine: { skipped: true, reason: "No API credentials configured" },
-      hive: { skipped: true, reason: "No API credentials configured" },
-    },
-    avgScore: null,
-    detail: "Detection APIs not yet configured",
-  };
+  const user = process.env.SIGHTENGINE_USER;
+  const secret = process.env.SIGHTENGINE_SECRET;
+  if (!user || !secret) {
+    return {
+      active: false,
+      risk: "not_configured",
+      results: { sightengine: { skipped: true, reason: "No API credentials configured" } },
+      avgScore: null,
+      detail: "Detection APIs not yet configured",
+    };
+  }
+  try {
+    const fs = (await import("fs")).default;
+    const FormData = (await import("form-data")).default;
+    const form = new FormData();
+    form.append("media", fs.createReadStream(filePath));
+    form.append("models", "genai");
+    form.append("api_user", user);
+    form.append("api_secret", secret);
+    const response = await fetch("https://api.sightengine.com/1.0/check.json", {
+      method: "POST",
+      body: form,
+      headers: form.getHeaders(),
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Sightengine error ${response.status}: ${err}`);
+    }
+    const data = await response.json();
+    const aiScore = data?.type?.ai_generated ?? null;
+    if (aiScore === null) throw new Error("No ai_generated score in response");
+    const risk = aiScore >= 0.7 ? "high" : aiScore >= 0.4 ? "medium" : "low";
+    const pct = Math.round(aiScore * 100);
+    return {
+      active: true,
+      risk,
+      results: {
+        sightengine: { ai_generated: aiScore, score: pct },
+      },
+      avgScore: aiScore,
+      detail: `Sightengine: ${pct}% probability AI-generated`,
+    };
+  } catch (e) {
+    return {
+      active: false,
+      risk: "not_configured",
+      results: { sightengine: { skipped: true, reason: e.message } },
+      avgScore: null,
+      detail: `Detection error: ${e.message}`,
+    };
+  }
 }
 
-// ─── LAYER 5: LLM Consensus (OpenAI GPT-4o) ──────────────────────────────────
+// ─── LAYER 5: LLM Consensus (GPT-4o Vision) ──────────────────────────────────
 async function checkLLMConsensus(filePath, metadataResult, detectionResult) {
   if (!process.env.OPENAI_API_KEY) {
     return {
@@ -195,11 +235,11 @@ function calculateTrustScore(layers) {
   let totalW = 0, totalP = 0;
   for (const [k, w] of Object.entries(weights)) {
     const layer = layers[k];
-    if (!layer?.active) continue; // skip unconfigured / failed layers
+    if (!layer?.active) continue;
     totalW += w;
     totalP += w * (penalties[layer.risk] ?? 0.5);
   }
-  if (totalW === 0) return null; // no active layers — insufficient data
+  if (totalW === 0) return null;
   return Math.max(0, Math.min(100, Math.round(100 - (totalP / totalW) * 100)));
 }
 
