@@ -49,7 +49,7 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .report-title-block p{font-size:.8rem;color:#a3a3a3}
 .score-block{text-align:right}
 .score-num{font-size:3rem;font-weight:800;line-height:1}
-.score-num.green{color:#4ade80}.score-num.yellow{color:#fbbf24}.score-num.orange{color:#fb923c}.score-num.red{color:#f87171}.score-num.gray{color:#a3a3a3}
+.score-num.green{color:#4ade80}.score-num.yellow{color:#fbbf24}.score-num.orange{color:#fb923c}.score-num.red{color:#f87171}
 .score-label{font-size:.7rem;color:#a3a3a3;text-transform:uppercase;letter-spacing:.05em}
 
 .verdict-bar{padding:1rem 2rem;font-size:.9rem;font-weight:600}
@@ -57,7 +57,31 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .verdict-bar.yellow{background:#fefce8;color:#a16207}
 .verdict-bar.orange{background:#fff7ed;color:#c2410c}
 .verdict-bar.red{background:#fef2f2;color:#b91c1c}
-.verdict-bar.gray{background:var(--gray-100);color:var(--gray-600)}
+
+/* Asset Type Banner */
+.asset-type-banner{padding:.75rem 2rem;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:.75rem;font-size:.825rem}
+.asset-type-banner.original{background:#f0fdf4}
+.asset-type-banner.derived{background:#fefce8}
+.asset-type-banner.screenshot{background:#f5f5f5}
+.at-icon{font-size:1rem;flex-shrink:0}
+.at-label{font-weight:700;margin-right:.35rem}
+.at-original{color:#15803d}
+.at-derived{color:#a16207}
+.at-screenshot{color:#525252}
+.at-desc{color:var(--gray-600)}
+
+/* Capture Coherence Panel */
+.coherence-panel{padding:1.25rem 2rem;border-bottom:1px solid var(--gray-200);background:#fafafa}
+.coherence-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.coherence-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-400)}
+.coherence-badge{font-size:.75rem;font-weight:700;padding:.25rem .6rem;border-radius:20px;white-space:nowrap}
+.coherence-badge.coherent{background:#dcfce7;color:#15803d}
+.coherence-badge.partial{background:#fef9c3;color:#92400e}
+.coherence-badge.incoherent{background:#fee2e2;color:#b91c1c}
+.coherence-badge.uncertain{background:var(--gray-200);color:var(--gray-600)}
+.coherence-explanation{font-size:.825rem;color:var(--gray-600);line-height:1.55}
+.coherence-explanation strong{color:var(--black);font-weight:600}
+.coherence-what{font-size:.75rem;color:var(--gray-400);margin-top:.5rem;font-style:italic}
 
 .layers-breakdown{padding:1.5rem 2rem}
 .layers-breakdown h3{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-400);margin-bottom:1rem}
@@ -73,17 +97,13 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .badge-orange{background:#fff7ed;color:#c2410c}
 .badge-red{background:#fef2f2;color:#b91c1c}
 .badge-gray{background:var(--gray-100);color:var(--gray-600)}
-.badge-blue{background:#eff6ff;color:#1d4ed8}
 
 .report-footer{padding:1.25rem 2rem;background:var(--gray-100);font-size:.8rem;color:var(--gray-400);display:flex;align-items:center;justify-content:space-between}
-.report-actions{margin-top:1.5rem;display:none;gap:.75rem;display:none;flex-wrap:wrap}
-.new-analysis-btn{background:var(--black);color:var(--white);border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer}
-.pdf-btn{background:var(--accent);color:var(--white);border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer}
+.new-analysis-btn{background:var(--black);color:var(--white);border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer;margin-top:1.5rem;display:none}
 
 /* Error */
 .error-box{display:none;margin-top:1.5rem;padding:1rem 1.25rem;background:#fef2f2;border-radius:8px;color:#b91c1c;font-size:.875rem}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <nav><a href="/" class="nav-logo">TRST<span>.</span>center</a></nav>
@@ -126,10 +146,28 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
       </div>
       <div class="score-block">
         <div class="score-num" id="scoreNum">—</div>
-        <div class="score-label" id="scoreLabel">Trust Score / 100</div>
+        <div class="score-label">Trust Score / 100</div>
       </div>
     </div>
+
     <div class="verdict-bar" id="verdictBar"></div>
+
+    <!-- Asset Type Banner -->
+    <div class="asset-type-banner" id="assetTypeBanner" style="display:none">
+      <span class="at-icon" id="assetTypeIcon"></span>
+      <span><span class="at-label" id="assetTypeLabel"></span><span class="at-desc" id="assetTypeDesc"></span></span>
+    </div>
+
+    <!-- Capture Coherence Panel -->
+    <div class="coherence-panel" id="coherencePanel" style="display:none">
+      <div class="coherence-header">
+        <span class="coherence-title">Capture Coherence</span>
+        <span class="coherence-badge" id="coherenceBadge"></span>
+      </div>
+      <div class="coherence-explanation" id="coherenceExplanation"></div>
+      <div class="coherence-what">Capture Coherence asks: do all visible elements appear to originate from one camera, one lens, one exposure, and one moment in time?</div>
+    </div>
+
     <div class="layers-breakdown">
       <h3>Evidence by Layer</h3>
       <div id="layersDetail"></div>
@@ -140,10 +178,7 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
     </div>
   </div>
 
-  <div class="report-actions" id="reportActions">
-    <button class="pdf-btn" id="pdfBtn">Download PDF Report</button>
-    <button class="new-analysis-btn" id="newBtn">Analyze Another Image</button>
-  </div>
+  <button class="new-analysis-btn" id="newBtn">Analyze Another Image</button>
 </main>
 
 <script>
@@ -155,13 +190,9 @@ const analyzeBtn = document.getElementById('analyzeBtn');
 const progressSection = document.getElementById('progressSection');
 const reportSection = document.getElementById('reportSection');
 const errorBox = document.getElementById('errorBox');
-const reportActions = document.getElementById('reportActions');
 const newBtn = document.getElementById('newBtn');
-const pdfBtn = document.getElementById('pdfBtn');
 
 let selectedFile = null;
-let lastReportData = null;
-let lastFileName = null;
 
 // Drag and drop
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
@@ -174,59 +205,12 @@ uploadZone.addEventListener('drop', e => {
 
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
 
-// Compress image to under 4MB before upload (keeps quality as high as possible)
-async function compressImage(file) {
-  const MAX_BYTES = 4 * 1024 * 1024; // 4MB
-  if (file.size <= MAX_BYTES) return file; // already small enough
-
-  return new Promise((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement('canvas');
-      // Scale down if very large (max 4000px on longest side)
-      let { width, height } = img;
-      const MAX_DIM = 4000;
-      if (width > MAX_DIM || height > MAX_DIM) {
-        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-
-      // Try quality levels from 0.92 down until under 4MB
-      let quality = 0.92;
-      const tryCompress = () => {
-        canvas.toBlob(blob => {
-          if (blob.size <= MAX_BYTES || quality <= 0.5) {
-            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
-          } else {
-            quality -= 0.08;
-            tryCompress();
-          }
-        }, 'image/jpeg', quality);
-      };
-      tryCompress();
-    };
-    img.src = url;
-  });
-}
-
-async function setFile(f) {
-  // Show preview immediately from original
+function setFile(f) {
+  selectedFile = f;
   const url = URL.createObjectURL(f);
   previewImg.src = url;
   previewBox.style.display = 'block';
-  analyzeBtn.disabled = true;
-  analyzeBtn.textContent = 'Preparing…';
-
-  selectedFile = await compressImage(f);
-
   analyzeBtn.disabled = false;
-  analyzeBtn.textContent = 'Run TRST Analysis';
 }
 
 // Fake progress animation
@@ -258,7 +242,7 @@ analyzeBtn.addEventListener('click', async () => {
   if (!selectedFile) return;
   errorBox.style.display = 'none';
   reportSection.style.display = 'none';
-  reportActions.style.display = 'none';
+  newBtn.style.display = 'none';
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = 'Analyzing…';
   progressSection.style.display = 'block';
@@ -274,11 +258,7 @@ analyzeBtn.addEventListener('click', async () => {
   const ANIM_MS = 14000;
   let animDone = false;
   let resultData = null;
-
-  const renderWhenReady = () => {
-    if (animDone && resultData) renderReport(resultData);
-  };
-
+  const renderWhenReady = () => { if (animDone && resultData) renderReport(resultData); };
   animateLayers(ANIM_MS, () => { animDone = true; renderWhenReady(); });
 
   try {
@@ -298,57 +278,161 @@ analyzeBtn.addEventListener('click', async () => {
   }
 });
 
-// Maps risk value → [CSS class, badge label]
-function riskBadge(risk) {
+function riskToBadge(risk) {
   const map = {
-    low:            ['badge-green',  'Low Risk'],
-    medium:         ['badge-yellow', 'Medium Risk'],
-    high:           ['badge-red',    'High Risk'],
-    not_found:      ['badge-gray',   'Not Found'],
-    not_configured: ['badge-blue',   'Not Configured'],
-    unknown:        ['badge-gray',   'Unknown'],
+    low: ['badge-green','Low Risk'],
+    medium: ['badge-yellow','Medium Risk'],
+    high: ['badge-red','High Risk'],
+    not_found: ['badge-gray','Not Found'],
+    not_configured: ['badge-gray','Not Configured'],
+    unknown: ['badge-gray','Not Checked']
   };
-  return map[risk] || ['badge-gray', 'Unknown'];
+  return map[risk] || map.unknown;
+}
+
+// --- Asset Type Banner ---
+function renderAssetType(metadata) {
+  const banner = document.getElementById('assetTypeBanner');
+  const icon = document.getElementById('assetTypeIcon');
+  const label = document.getElementById('assetTypeLabel');
+  const desc = document.getElementById('assetTypeDesc');
+
+  const assetType = metadata?.assetType;
+  if (!assetType || assetType === 'original') {
+    // Only show banner for non-original
+    if (assetType === 'original') {
+      banner.style.display = 'flex';
+      banner.className = 'asset-type-banner original';
+      icon.textContent = '📷';
+      label.className = 'at-label at-original';
+      label.textContent = 'Original Capture';
+      desc.textContent = 'Camera EXIF signature detected — image appears to originate from a direct camera capture.';
+    } else {
+      banner.style.display = 'none';
+    }
+    return;
+  }
+
+  banner.style.display = 'flex';
+  if (assetType === 'screenshot_or_derived') {
+    banner.className = 'asset-type-banner screenshot';
+    icon.textContent = '🖼️';
+    label.className = 'at-label at-screenshot';
+    label.textContent = 'Screenshot or Social Repost — ';
+    desc.textContent = 'No EXIF data found. This image was likely screenshotted, cropped, or shared via social media. Low provenance does not mean fake content — origin simply cannot be verified.';
+  } else if (assetType === 'derived') {
+    banner.className = 'asset-type-banner derived';
+    icon.textContent = '📋';
+    label.className = 'at-label at-derived';
+    label.textContent = 'Derived Image — ';
+    desc.textContent = 'Minimal metadata, no camera signature. Image may have been re-exported, edited, or converted. Provenance is partial.';
+  }
+}
+
+// --- Capture Coherence Panel ---
+function renderCaptureCoherence(llm) {
+  const panel = document.getElementById('coherencePanel');
+  if (!llm || !llm.active || !llm.verdict) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  panel.style.display = 'block';
+  const badge = document.getElementById('coherenceBadge');
+  const explanation = document.getElementById('coherenceExplanation');
+
+  // Derive coherence state from LLM verdict + flags
+  const verdict = llm.verdict;
+  const flags = llm.flags || [];
+  const reasoning = llm.reasoning || '';
+
+  // Look for coherence-related signals in flags
+  const coherenceFlags = flags.filter(f => {
+    const fl = f.toLowerCase();
+    return fl.includes('noise') || fl.includes('grain') || fl.includes('lighting') ||
+           fl.includes('shadow') || fl.includes('focus') || fl.includes('edge') ||
+           fl.includes('perspective') || fl.includes('color') || fl.includes('compress') ||
+           fl.includes('coherence') || fl.includes('consistent') || fl.includes('mismatch') ||
+           fl.includes('halo') || fl.includes('masking') || fl.includes('composit') ||
+           fl.includes('background') || fl.includes('lens');
+  });
+
+  let coherenceState, badgeText;
+
+  if (verdict === 'authentic' || verdict === 'likely_authentic') {
+    coherenceState = 'coherent';
+    badgeText = 'Coherent';
+  } else if (verdict === 'manipulated') {
+    coherenceState = 'incoherent';
+    badgeText = 'Incoherent';
+  } else if (verdict === 'synthetic') {
+    coherenceState = 'incoherent';
+    badgeText = 'Not Applicable — Fully Synthetic';
+  } else if (verdict === 'likely_synthetic') {
+    coherenceState = 'partial';
+    badgeText = 'Uncertain — Likely Synthetic';
+  } else {
+    coherenceState = 'uncertain';
+    badgeText = 'Uncertain';
+  }
+
+  badge.className = `coherence-badge ${coherenceState}`;
+  badge.textContent = badgeText;
+
+  // Build explanation from reasoning + coherence flags
+  let explanationHTML = '';
+  if (reasoning) {
+    explanationHTML += reasoning;
+  }
+  if (coherenceFlags.length > 0) {
+    explanationHTML += (reasoning ? ' ' : '') + '<br><strong>Coherence signals detected:</strong> ' +
+      coherenceFlags.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('; ') + '.';
+  }
+  if (!explanationHTML) {
+    if (coherenceState === 'coherent') {
+      explanationHTML = 'No incoherence signals detected. Visible elements appear consistent with a single photographic capture.';
+    } else {
+      explanationHTML = 'Insufficient forensic signals to assess capture coherence.';
+    }
+  }
+  explanation.innerHTML = explanationHTML;
 }
 
 function renderReport(data) {
   progressSection.style.display = 'none';
-  lastReportData = data;
-  lastFileName = data.filename;
 
   const score = data.trustScore;
   const verdict = data.verdict;
   const color = verdict.color || 'gray';
 
-  if (score === null || score === undefined) {
-    document.getElementById('scoreNum').textContent = '—';
-    document.getElementById('scoreNum').className = 'score-num gray';
-    document.getElementById('scoreLabel').textContent = 'Insufficient Data';
-  } else {
-    document.getElementById('scoreNum').textContent = score;
-    document.getElementById('scoreNum').className = `score-num ${color}`;
-    document.getElementById('scoreLabel').textContent = 'Trust Score / 100';
-  }
-
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreNum').className = `score-num ${color}`;
   document.getElementById('verdictBar').textContent = `${verdict.label} — ${verdict.recommendation}`;
   document.getElementById('verdictBar').className = `verdict-bar ${color}`;
   document.getElementById('reportMeta').textContent = `${data.filename || 'Image'} · ${new Date(data.analyzedAt).toLocaleString()}`;
   document.getElementById('reportTimestamp').textContent = `Analyzed ${new Date(data.analyzedAt).toLocaleString()}`;
 
   const L = data.layers;
+
+  // Asset type banner (from Layer 2)
+  renderAssetType(L.metadata);
+
+  // Capture Coherence panel (from Layer 5)
+  renderCaptureCoherence(L.llm);
+
   const layerDefs = [
-    { key: 'c2pa',      num: 'Layer 1', name: 'C2PA Provenance',         detail: L.c2pa?.detail },
-    { key: 'metadata',  num: 'Layer 2', name: 'Metadata Forensics',      detail: L.metadata?.detail },
-    { key: 'origin',    num: 'Layer 3', name: 'Origin Tracing',          detail: L.origin?.detail },
-    { key: 'detection', num: 'Layer 4', name: 'AI Detection APIs',       detail: L.detection?.detail },
-    { key: 'llm',       num: 'Layer 5', name: 'LLM Consensus (Claude)',  detail: L.llm?.detail },
-    { key: 'context',   num: 'Layer 6', name: 'Context & Credibility',   detail: L.context?.detail },
+    { key: 'c2pa',      num: 'Layer 1', name: 'C2PA Provenance',        detail: L.c2pa?.detail },
+    { key: 'metadata',  num: 'Layer 2', name: 'Metadata Forensics',     detail: L.metadata?.detail },
+    { key: 'origin',    num: 'Layer 3', name: 'Origin Tracing',         detail: L.origin?.detail },
+    { key: 'detection', num: 'Layer 4', name: 'AI Detection APIs',      detail: L.detection?.detail },
+    { key: 'llm',       num: 'Layer 5', name: 'LLM Consensus (GPT-4o)', detail: L.llm?.detail },
+    { key: 'context',   num: 'Layer 6', name: 'Context & Credibility',  detail: L.context?.detail },
   ];
 
   const container = document.getElementById('layersDetail');
   container.innerHTML = layerDefs.map(ld => {
     const risk = L[ld.key]?.risk || 'unknown';
-    const [badgeClass, badgeLabel] = riskBadge(risk);
+    const [badgeClass, badgeLabel] = riskToBadge(risk);
     return `<div class="layer-row">
       <div class="lr-num">${ld.num}</div>
       <div class="lr-content">
@@ -360,168 +444,18 @@ function renderReport(data) {
   }).join('');
 
   reportSection.style.display = 'block';
-  reportActions.style.display = 'flex';
+  newBtn.style.display = 'inline-block';
   analyzeBtn.textContent = 'Run TRST Analysis';
   reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ─── PDF Generator ───────────────────────────────────────────────────────────
-pdfBtn.addEventListener('click', () => {
-  if (!lastReportData) return;
-  generatePDF(lastReportData);
-});
-
-function generatePDF(data) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
-  const W = doc.internal.pageSize.getWidth();
-  const score = data.trustScore;
-  const verdict = data.verdict;
-  const color = verdict.color;
-
-  // Header block
-  doc.setFillColor(10, 10, 10);
-  doc.rect(0, 0, W, 90, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
-  doc.setTextColor(255, 255, 255);
-  doc.text('TRST.center', 40, 38);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(163, 163, 163);
-  doc.text('Authenticity Report', 40, 54);
-  doc.setFontSize(9);
-  doc.text(`File: ${data.filename || 'Unknown'} · Analyzed: ${new Date(data.analyzedAt).toLocaleString()}`, 40, 70);
-
-  // Score
-  const scoreText = score !== null && score !== undefined ? String(score) : '—';
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(44);
-  const scoreColors = { green: [74,222,128], yellow: [251,191,36], orange: [251,146,60], red: [248,113,113], gray: [163,163,163] };
-  const sc = scoreColors[color] || scoreColors.gray;
-  doc.setTextColor(sc[0], sc[1], sc[2]);
-  doc.text(scoreText, W - 60, 55, { align: 'right' });
-  doc.setFontSize(8);
-  doc.setTextColor(163, 163, 163);
-  doc.text(score !== null ? 'Trust Score / 100' : 'Insufficient Data', W - 40, 72, { align: 'right' });
-
-  // Verdict stripe
-  const stripeColors = { green: [240,253,244], yellow: [254,252,232], orange: [255,247,237], red: [254,242,242], gray: [245,245,245] };
-  const stripeText = { green: [21,128,61], yellow: [161,98,7], orange: [194,65,12], red: [185,28,28], gray: [82,82,82] };
-  const bg = stripeColors[color] || stripeColors.gray;
-  const fg = stripeText[color] || stripeText.gray;
-  doc.setFillColor(bg[0], bg[1], bg[2]);
-  doc.rect(0, 90, W, 36, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(fg[0], fg[1], fg[2]);
-  doc.text(`${verdict.label}`, 40, 107);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text(verdict.recommendation, 40, 119);
-
-  // Evidence table header
-  let y = 155;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(163, 163, 163);
-  doc.text('EVIDENCE BY LAYER', 40, y);
-  y += 14;
-
-  const L = data.layers;
-  const layerDefs = [
-    { key: 'c2pa',      num: 'Layer 1', name: 'C2PA Provenance',         detail: L.c2pa?.detail },
-    { key: 'metadata',  num: 'Layer 2', name: 'Metadata Forensics',      detail: L.metadata?.detail },
-    { key: 'origin',    num: 'Layer 3', name: 'Origin Tracing',          detail: L.origin?.detail },
-    { key: 'detection', num: 'Layer 4', name: 'AI Detection APIs',       detail: L.detection?.detail },
-    { key: 'llm',       num: 'Layer 5', name: 'LLM Consensus (Claude)',  detail: L.llm?.detail },
-    { key: 'context',   num: 'Layer 6', name: 'Context & Credibility',   detail: L.context?.detail },
-  ];
-
-  const badgeColors = {
-    low:            { bg: [240,253,244], fg: [21,128,61],  label: 'Low Risk' },
-    medium:         { bg: [254,252,232], fg: [161,98,7],   label: 'Medium Risk' },
-    high:           { bg: [254,242,242], fg: [185,28,28],  label: 'High Risk' },
-    not_found:      { bg: [245,245,245], fg: [82,82,82],   label: 'Not Found' },
-    not_configured: { bg: [239,246,255], fg: [29,78,216],  label: 'Not Configured' },
-    unknown:        { bg: [245,245,245], fg: [82,82,82],   label: 'Unknown' },
-  };
-
-  layerDefs.forEach((ld, i) => {
-    const risk = L[ld.key]?.risk || 'unknown';
-    const bc = badgeColors[risk] || badgeColors.unknown;
-    const rowH = 46;
-    if (i % 2 === 0) {
-      doc.setFillColor(252, 252, 252);
-      doc.rect(0, y, W, rowH, 'F');
-    }
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text(ld.num, 40, y + 14);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(10, 10, 10);
-    doc.text(ld.name, 105, y + 14);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(80, 80, 80);
-    const lines = doc.splitTextToSize(ld.detail || '—', W - 230);
-    doc.text(lines[0] || '', 105, y + 27);
-    if (lines[1]) doc.text(lines[1], 105, y + 37);
-    // Badge
-    const badgeW = 80, badgeH = 14, badgeX = W - badgeW - 30;
-    doc.setFillColor(bc.bg[0], bc.bg[1], bc.bg[2]);
-    doc.roundedRect(badgeX, y + 6, badgeW, badgeH, 3, 3, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(bc.fg[0], bc.fg[1], bc.fg[2]);
-    doc.text(bc.label, badgeX + badgeW / 2, y + 15, { align: 'center' });
-    y += rowH;
-  });
-
-  // Divider
-  y += 10;
-  doc.setDrawColor(229, 229, 229);
-  doc.line(40, y, W - 40, y);
-  y += 20;
-
-  // Methodology note
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(120, 120, 120);
-  const note = 'TRST uses a 6-layer forensic analysis combining metadata examination, origin tracing, AI detection APIs, and LLM reasoning to produce an evidence-based trust assessment. Layers marked "Not Configured" require additional API keys. "Not Found" means the layer ran but found no evidence of that type.';
-  const noteLines = doc.splitTextToSize(note, W - 80);
-  doc.text(noteLines, 40, y);
-
-  // Footer
-  const footerY = doc.internal.pageSize.getHeight() - 36;
-  doc.setFillColor(10, 10, 10);
-  doc.rect(0, footerY, W, 36, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text('TRST.center', 40, footerY + 18);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(163, 163, 163);
-  doc.text('Media Authenticity Verification', 40, footerY + 29);
-  doc.setFontSize(8);
-  doc.text(`Generated ${new Date().toLocaleString()}`, W - 40, footerY + 22, { align: 'right' });
-
-  const safeName = (lastFileName || 'image').replace(/[^a-zA-Z0-9_-]/g, '_');
-  const scoreStr = score !== null ? score : 'NA';
-  doc.save(`TRST_Report_${safeName}_score${scoreStr}.pdf`);
-}
-
 newBtn.addEventListener('click', () => {
   selectedFile = null;
-  lastReportData = null;
   fileInput.value = '';
   previewBox.style.display = 'none';
   previewImg.src = '';
   reportSection.style.display = 'none';
-  reportActions.style.display = 'none';
+  newBtn.style.display = 'none';
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = 'Run TRST Analysis';
   window.scrollTo({ top: 0, behavior: 'smooth' });
