@@ -1,37 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>TRST — Analyze</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--black:#0a0a0a;--white:#fff;--gray-100:#f5f5f5;--gray-200:#e5e5e5;--gray-400:#a3a3a3;--gray-600:#525252;--gray-800:#262626;--accent:#1a56db;--accent-light:#eff6ff;--green:#16a34a;--yellow:#ca8a04;--orange:#ea580c;--red:#dc2626;--font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--white);color:var(--black);-webkit-font-smoothing:antialiased;min-height:100vh}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:64px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--gray-200)}
-.nav-logo{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;color:var(--black);text-decoration:none}.nav-logo span{color:var(--accent)}
-
-/* Upload Zone */
+:root{
+  --black:#0a0a0a;--white:#fff;
+  --gray-100:#f5f5f5;--gray-200:#e5e5e5;--gray-400:#a3a3a3;--gray-600:#525252;--gray-800:#262626;
+  --accent:#1a56db;--accent-light:#eff6ff;
+  --green:#16a34a;--yellow:#ca8a04;--orange:#ea580c;--red:#dc2626;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
+}
+body{font-family:var(--font);background:var(--white);color:var(--black);-webkit-font-smoothing:antialiased;min-height:100vh}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;padding:0 2rem;height:64px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--gray-200)}
+.nav-logo{font-size:1.25rem;font-weight:700;letter-spacing:-.02em;color:var(--black);text-decoration:none}
+.nav-logo span{color:var(--accent)}
 .main{padding:96px 1.5rem 4rem;max-width:720px;margin:0 auto}
 h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .subtitle{color:var(--gray-600);margin-bottom:2.5rem;font-size:1rem}
 
+/* Upload */
 .upload-zone{border:2px dashed var(--gray-200);border-radius:16px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray-100);position:relative}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:var(--accent-light)}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .upload-icon{font-size:2.5rem;margin-bottom:1rem}
 .upload-title{font-size:1.1rem;font-weight:600;margin-bottom:.4rem}
 .upload-sub{font-size:.85rem;color:var(--gray-400)}
-.upload-preview{display:none;margin-top:1.5rem}
-.upload-preview img{max-height:200px;border-radius:8px;object-fit:contain}
-
+.preview-img{display:none;max-height:200px;border-radius:8px;object-fit:contain;margin-top:1.5rem}
 .analyze-btn{display:block;width:100%;margin-top:1.5rem;padding:1rem;background:var(--black);color:var(--white);border:none;border-radius:10px;font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:opacity .2s}
 .analyze-btn:disabled{opacity:.4;cursor:not-allowed}
 .analyze-btn:hover:not(:disabled){opacity:.85}
 
+/* Error */
+.error-box{display:none;margin-top:1rem;padding:.875rem 1rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#b91c1c;font-size:.875rem}
+
 /* Progress */
 .progress-section{display:none;margin-top:2rem}
-.progress-title{font-size:.9rem;font-weight:600;color:var(--gray-600);margin-bottom:1rem}
+.progress-title{font-size:.9rfm;font-weight:600;color:var(--gray-600);margin-bottom:1rem}
 .layer-progress{display:flex;flex-direction:column;gap:.75rem}
 .layer-item{display:flex;align-items:center;gap:.75rem;font-size:.875rem}
 .layer-dot{width:10px;height:10px;border-radius:50%;background:var(--gray-200);flex-shrink:0;transition:background .3s}
@@ -52,38 +60,25 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .score-num{font-size:3rem;font-weight:800;line-height:1}
 .score-num.green{color:#4ade80}.score-num.yellow{color:#fbbf24}.score-num.orange{color:#fb923c}.score-num.red{color:#f87171}
 .score-label{font-size:.7rem;color:#a3a3a3;text-transform:uppercase;letter-spacing:.05em}
-
 .verdict-bar{padding:1rem 2rem;font-size:.9rem;font-weight:600}
 .verdict-bar.green{background:#f0fdf4;color:#15803d}
 .verdict-bar.yellow{background:#fefce8;color:#a16207}
 .verdict-bar.orange{background:#fff7ed;color:#c2410c}
 .verdict-bar.red{background:#fef2f2;color:#b91c1c}
 
-/* Asset Type Banner */
-.asset-type-banner{padding:.75rem 2rem;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:.75rem;font-size:.825rem}
-.asset-type-banner.original{background:#f0fdf4}
-.asset-type-banner.derived{background:#fefce8}
-.asset-type-banner.screenshot{background:#f5f5f5}
-.at-icon{font-size:1rem;flex-shrink:0}
-.at-label{font-weight:700;margin-right:.35rem}
-.at-original{color:#15803d}
-.at-derived{color:#a16207}
-.at-screenshot{color:#525252}
-.at-desc{color:var(--gray-600)}
-
-/* Capture Coherence Panel */
-.coherence-panel{padding:1.25rem 2rem;border-bottom:1px solid var(--gray-200);background:#fafafa}
+/* Coherence */
+.coherence-panel{display:none;padding:1.25rem 2rem;border-bottom:1px solid var(--gray-200);background:#fafafa}
 .coherence-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
 .coherence-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-400)}
-.coherence-badge{font-size:.75rem;font-weight:700;padding:.25rem .6rem;border-radius:20px;white-space:nowrap}
+.coherence-badge{font-size:.75rem;font-weight:700;padding:.25rem .6rem;border-radius:20px}
 .coherence-badge.coherent{background:#dcfce7;color:#15803d}
 .coherence-badge.partial{background:#fef9c3;color:#92400e}
 .coherence-badge.incoherent{background:#fee2e2;color:#b91c1c}
 .coherence-badge.uncertain{background:var(--gray-200);color:var(--gray-600)}
 .coherence-explanation{font-size:.825rem;color:var(--gray-600);line-height:1.55}
-.coherence-explanation strong{color:var(--black);font-weight:600}
 .coherence-what{font-size:.75rem;color:var(--gray-400);margin-top:.5rem;font-style:italic}
 
+/* Layers */
 .layers-breakdown{padding:1.5rem 2rem}
 .layers-breakdown h3{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-400);margin-bottom:1rem}
 .layer-row{display:flex;align-items:flex-start;gap:1rem;padding:.875rem 0;border-bottom:1px solid var(--gray-100)}
@@ -99,47 +94,42 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .badge-red{background:#fef2f2;color:#b91c1c}
 .badge-gray{background:var(--gray-100);color:var(--gray-600)}
 
-.report-footer{padding:1.25rem 2rem;background:var(--gray-100);font-size:.8rem;color:var(--gray-400);display:flex;align-items:center;justify-content:space-between}
+/* Actions */
 .report-actions{display:none;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap}
-.new-analysis-btn,.pdf-btn{border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer}
-.new-analysis-btn{background:var(--black);color:var(--white)}
+.pdf-btn,.new-btn{border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer}
 .pdf-btn{background:var(--gray-100);color:var(--black);border:1px solid var(--gray-200)}
 .pdf-btn:hover{background:var(--gray-200)}
-
-/* Error */
-.error-box{display:none;margin-top:1.5rem;padding:1rem 1.25rem;background:#fef2f2;border-radius:8px;color:#b91c1c;font-size:.875rem}
+.new-btn{background:var(--black);color:var(--white)}
 </style>
 </head>
 <body>
-<nav><a href="/" class="nav-logo">TRST<span>.</span>center</a></nav>
-
+<nav>
+  <a class="nav-logo" href="https://www.trst.center/">TRST<span>.center</span></a>
+</nav>
 <main class="main">
   <h1>Analyze Media</h1>
   <p class="subtitle">Upload an image to run the 6-layer TRST authenticity analysis.</p>
 
   <div class="upload-zone" id="uploadZone">
-    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/gif"/>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp"/>
     <div class="upload-icon">🔍</div>
     <div class="upload-title">Drop an image here or click to upload</div>
     <div class="upload-sub">JPEG, PNG, WebP — max 20MB</div>
-    <div class="upload-preview" id="previewBox">
-      <img id="previewImg" src="" alt="Preview"/>
-    </div>
+    <img class="preview-img" id="previewImg" alt="Preview"/>
   </div>
 
   <button class="analyze-btn" id="analyzeBtn" disabled>Run TRST Analysis</button>
-
   <div class="error-box" id="errorBox"></div>
 
   <div class="progress-section" id="progressSection">
     <p class="progress-title">Running analysis…</p>
     <div class="layer-progress">
-      <div class="layer-item" id="prog-1"><div class="layer-dot" id="dot-1"></div><span class="layer-name" id="lname-1">Layer 1 — C2PA Provenance</span></div>
-      <div class="layer-item" id="prog-2"><div class="layer-dot" id="dot-2"></div><span class="layer-name" id="lname-2">Layer 2 — Metadata Forensics</span></div>
-      <div class="layer-item" id="prog-3"><div class="layer-dot" id="dot-3"></div><span class="layer-name" id="lname-3">Layer 3 — Origin Tracing</span></div>
-      <div class="layer-item" id="prog-4"><div class="layer-dot" id="dot-4"></div><span class="layer-name" id="lname-4">Layer 4 — AI Detection APIs</span></div>
-      <div class="layer-item" id="prog-5"><div class="layer-dot" id="dot-5"></div><span class="layer-name" id="lname-5">Layer 5 — LLM Consensus</span></div>
-      <div class="layer-item" id="prog-6"><div class="layer-dot" id="dot-6"></div><span class="layer-name" id="lname-6">Layer 6 — Context Analysis</span></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-1"></div><div class="layer-name" id="lname-1">Layer 1 — C2PA Provenance</div></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-2"></div><div class="layer-name" id="lname-2">Layer 2 — Metadata Forensics</div></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-3"></div><div class="layer-name" id="lname-3">Layer 3 — Origin Tracing</div></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-4"></div><div class="layer-name" id="lname-4">Layer 4 — AI Detection APIs</div></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-5"></div><div class="layer-name" id="lname-5">Layer 5 — LLM Consensus</div></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-6"></div><div class="layer-name" id="lname-6">Layer 6 — Context Analysis</div></div>
     </div>
   </div>
 
@@ -154,17 +144,8 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
         <div class="score-label">Trust Score / 100</div>
       </div>
     </div>
-
     <div class="verdict-bar" id="verdictBar"></div>
-
-    <!-- Asset Type Banner -->
-    <div class="asset-type-banner" id="assetTypeBanner" style="display:none">
-      <span class="at-icon" id="assetTypeIcon"></span>
-      <span><span class="at-label" id="assetTypeLabel"></span><span class="at-desc" id="assetTypeDesc"></span></span>
-    </div>
-
-    <!-- Capture Coherence Panel -->
-    <div class="coherence-panel" id="coherencePanel" style="display:none">
+    <div class="coherence-panel" id="coherencePanel">
       <div class="coherence-header">
         <span class="coherence-title">Capture Coherence</span>
         <span class="coherence-badge" id="coherenceBadge"></span>
@@ -172,286 +153,260 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
       <div class="coherence-explanation" id="coherenceExplanation"></div>
       <div class="coherence-what">Capture Coherence asks: do all visible elements appear to originate from one camera, one lens, one exposure, and one moment in time?</div>
     </div>
-
     <div class="layers-breakdown">
       <h3>Evidence by Layer</h3>
       <div id="layersDetail"></div>
     </div>
-    <div class="report-footer">
-      <span id="reportTimestamp"></span>
-      <span>TRST.center</span>
+    <div style="padding:1rem 2rem;border-top:1px solid var(--gray-200);background:var(--black);color:#a3a3a3;font-size:.75rem;text-align:center">
+      TRST.center
     </div>
   </div>
 
   <div class="report-actions" id="reportActions">
     <button class="pdf-btn" id="pdfBtn">Download PDF Report</button>
-    <button class="new-analysis-btn" id="newBtn">Analyze Another Image</button>
+    <button class="new-btn" id="newBtn">Analyze Another Image</button>
   </div>
 </main>
 
 <script>
-const fileInput = document.getElementById('fileInput');
-const uploadZone = document.getElementById('uploadZone');
-const previewBox = document.getElementById('previewBox');
-const previewImg = document.getElementById('previewImg');
-const analyzeBtn = document.getElementById('analyzeBtn');
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const uploadZone    = document.getElementById('uploadZone');
+const fileInput     = document.getElementById('fileInput');
+const previewImg    = document.getElementById('previewImg');
+const analyzeBtn    = document.getElementById('analyzeBtn');
+const errorBox      = document.getElementById('errorBox');
 const progressSection = document.getElementById('progressSection');
 const reportSection = document.getElementById('reportSection');
 const reportActions = document.getElementById('reportActions');
-const errorBox = document.getElementById('errorBox');
-const newBtn = document.getElementById('newBtn');
-const pdfBtn = document.getElementById('pdfBtn');
+const pdfBtn        = document.getElementById('pdfBtn');
+const newBtn        = document.getElementById('newBtn');
 
 let selectedFile = null;
 let lastReportData = null;
 
-// Drag and drop
+// ── File selection ────────────────────────────────────────────────────────────
+function handleFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  selectedFile = file;
+  const url = URL.createObjectURL(file);
+  previewImg.src = url;
+  previewImg.style.display = 'block';
+  analyzeBtn.disabled = false;
+  errorBox.style.display = 'none';
+}
+
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
 uploadZone.addEventListener('drop', e => {
-  e.preventDefault(); uploadZone.classList.remove('dragover');
-  const f = e.dataTransfer.files[0];
-  if (f) setFile(f);
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  handleFile(e.dataTransfer.files[0]);
 });
 
-fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+newBtn.addEventListener('click', () => {
+  selectedFile = null;
+  lastReportData = null;
+  previewImg.style.display = 'none';
+  previewImg.src = '';
+  fileInput.value = '';
+  analyzeBtn.disabled = true;
+  reportSection.style.display = 'none';
+  reportActions.style.display = 'none';
+  errorBox.style.display = 'none';
+  for (let i = 1; i <= 6; i++) {
+    document.getElementById('dot-' + i).className = 'layer-dot';
+    document.getElementById('lname-' + i).className = 'layer-name';
+  }
+});
 
-function setFile(f) {
-  selectedFile = f;
-  const url = URL.createObjectURL(f);
-  previewImg.src = url;
-  previewBox.style.display = 'block';
-  analyzeBtn.disabled = false;
+// ── Layer animation ───────────────────────────────────────────────────────────
+function animateLayers(totalMs, onDone) {
+  const perLayer = totalMs / 6;
+  let current = 0;
+  function next() {
+    if (current > 0) {
+      document.getElementById('dot-' + current).className = 'layer-dot done';
+      document.getElementById('lname-' + current).className = 'layer-name done';
+    }
+    current++;
+    if (current > 6) { onDone(); return; }
+    document.getElementById('dot-' + current).className = 'layer-dot active pulse';
+    document.getElementById('lname-' + current).className = 'layer-name active';
+    setTimeout(next, perLayer);
+  }
+  next();
 }
 
-// Fake progress animation
-function animateLayers(durationMs, onDone) {
-  const delays = [0, 0.1, 0.25, 0.45, 0.65, 0.85];
-  delays.forEach((frac, i) => {
-    const n = i + 1;
-    setTimeout(() => {
-      document.getElementById(`dot-${n}`).classList.add('active', 'pulse');
-      document.getElementById(`lname-${n}`).classList.add('active');
-      if (n > 1) {
-        document.getElementById(`dot-${n-1}`).classList.remove('active', 'pulse');
-        document.getElementById(`dot-${n-1}`).classList.add('done');
-        document.getElementById(`lname-${n-1}`).classList.remove('active');
-        document.getElementById(`lname-${n-1}`).classList.add('done');
-      }
-    }, frac * durationMs);
+// ── Badge helper ──────────────────────────────────────────────────────────────
+function riskBadge(risk) {
+  const map = {
+    low:            ['badge-green',  'Low Risk'],
+    medium:         ['badge-yellow', 'Medium Risk'],
+    high:           ['badge-red',    'High Risk'],
+    not_found:      ['badge-gray',   'Not Found'],
+    not_configured: ['badge-gray',   'Not Configured'],
+    unknown:        ['badge-gray',   'Not Checked'],
+  };
+  return map[risk] || map.unknown;
+}
+
+// ── Capture Coherence ─────────────────────────────────────────────────────────
+function renderCoherence(llm) {
+  const panel = document.getElementById('coherencePanel');
+  if (!llm || !llm.active || !llm.verdict) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+
+  const verdict = llm.verdict;
+  const flags = (llm.flags || []).filter(f => {
+    const fl = f.toLowerCase();
+    return ['noise','grain','lighting','shadow','focus','edge','perspective',
+            'color','compress','coherence','consistent','mismatch','halo',
+            'masking','composit','background','lens'].some(k => fl.includes(k));
   });
-  setTimeout(() => {
-    document.getElementById('dot-6').classList.remove('active','pulse');
-    document.getElementById('dot-6').classList.add('done');
-    document.getElementById('lname-6').classList.remove('active');
-    document.getElementById('lname-6').classList.add('done');
-    onDone();
-  }, durationMs);
+
+  let state, badge, summary;
+  if (verdict === 'authentic' || verdict === 'likely_authentic') {
+    state = 'coherent'; badge = 'Coherent';
+    summary = flags.length
+      ? 'GPT-4o found the image consistent with a single photographic capture, though noted: ' + flags.map(f => f[0].toUpperCase() + f.slice(1)).join('; ') + '.'
+      : 'GPT-4o found no signs of manipulation. Edges, noise, lighting, and depth of field appear consistent across the image.';
+  } else if (verdict === 'manipulated') {
+    state = 'incoherent'; badge = 'Incoherent';
+    summary = flags.length
+      ? 'GPT-4o identified incoherence signals: ' + flags.map(f => f[0].toUpperCase() + f.slice(1)).join('; ') + '. Elements appear to originate from different sources.'
+      : 'GPT-4o detected signs of manipulation — elements do not appear to originate from a single photographic capture.';
+  } else if (verdict === 'synthetic') {
+    state = 'incoherent'; badge = 'Not Applicable — Fully Synthetic';
+    summary = 'GPT-4o assessed this as a fully AI-generated image. Capture Coherence does not apply to synthetic content.';
+  } else if (verdict === 'likely_synthetic') {
+    state = 'partial'; badge = 'Uncertain — Likely Synthetic';
+    summary = 'GPT-4o found characteristics consistent with AI generation. Capture coherence is uncertain.';
+  } else {
+    state = 'uncertain'; badge = 'Uncertain';
+    summary = 'Insufficient forensic signals to assess capture coherence.';
+  }
+
+  const el = document.getElementById('coherenceBadge');
+  el.className = 'coherence-badge ' + state;
+  el.textContent = badge;
+  document.getElementById('coherenceExplanation').textContent = summary;
 }
 
+// ── Render report ─────────────────────────────────────────────────────────────
+function renderReport(data) {
+  progressSection.style.display = 'none';
+  lastReportData = data;
+
+  const score   = data.trustScore;
+  const verdict = data.verdict;
+  const color   = verdict.color || 'gray';
+
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreNum').className = 'score-num ' + color;
+  document.getElementById('verdictBar').textContent = verdict.label + ' — ' + verdict.recommendation;
+  document.getElementById('verdictBar').className = 'verdict-bar ' + color;
+  document.getElementById('reportMeta').textContent =
+    (data.filename || 'Image') + ' · ' + new Date(data.analyzedAt).toLocaleString();
+
+  const L = data.layers || {};
+  renderCoherence(L.llm);
+
+  const layerDefs = [
+    { num: 'Layer 1', name: 'C2PA Provenance',        key: 'c2pa' },
+    { num: 'Layer 2', name: 'Metadata Forensics',     key: 'metadata' },
+    { num: 'Layer 3', name: 'Origin Tracing',         key: 'origin' },
+    { num: 'Layer 4', name: 'AI Detection APIs',      key: 'detection' },
+    { num: 'Layer 5', name: 'LLM Consensus',          key: 'llm' },
+    { num: 'Layer 6', name: 'Context & Credibility',  key: 'context' },
+  ];
+
+  document.getElementById('layersDetail').innerHTML = layerDefs.map(ld => {
+    const layer = L[ld.key] || {};
+    const [cls, label] = riskBadge(layer.risk || 'unknown');
+    return '<div class="layer-row">' +
+      '<div class="lr-num">' + ld.num + '</div>' +
+      '<div class="lr-content">' +
+        '<div class="lr-name">' + ld.name + '</div>' +
+        '<div class="lr-detail">' + (layer.detail || '—') + '</div>' +
+      '</div>' +
+      '<div class="lr-badge ' + cls + '">' + label + '</div>' +
+    '</div>';
+  }).join('');
+
+  reportSection.style.display = 'block';
+  reportActions.style.display = 'flex';
+  analyzeBtn.disabled = false;
+  analyzeBtn.textContent = 'Run TRST Analysis';
+  reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Run analysis ──────────────────────────────────────────────────────────────
 analyzeBtn.addEventListener('click', async () => {
   if (!selectedFile) return;
+
+  // Reset UI
   errorBox.style.display = 'none';
   reportSection.style.display = 'none';
   reportActions.style.display = 'none';
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = 'Analyzing…';
   progressSection.style.display = 'block';
-
   for (let i = 1; i <= 6; i++) {
-    document.getElementById(`dot-${i}`).className = 'layer-dot';
-    document.getElementById(`lname-${i}`).className = 'layer-name';
+    document.getElementById('dot-' + i).className = 'layer-dot';
+    document.getElementById('lname-' + i).className = 'layer-name';
   }
 
-  const form = new FormData();
-  form.append('image', selectedFile);
-
-  const ANIM_MS = 14000;
+  // Start animation and API call in parallel
   let animDone = false;
   let resultData = null;
-  const renderWhenReady = () => { if (animDone && resultData) renderReport(resultData); };
-  animateLayers(ANIM_MS, () => { animDone = true; renderWhenReady(); });
+  let renderError = null;
+
+  function tryRender() {
+    if (!animDone || !resultData) return;
+    try {
+      renderReport(resultData);
+    } catch (err) {
+      progressSection.style.display = 'none';
+      analyzeBtn.disabled = false;
+      analyzeBtn.textContent = 'Run TRST Analysis';
+      errorBox.textContent = 'Display error: ' + err.message;
+      errorBox.style.display = 'block';
+    }
+  }
+
+  animateLayers(14000, () => { animDone = true; tryRender(); });
 
   try {
+    const form = new FormData();
+    form.append('image', selectedFile);
     const res = await fetch('/api/analyze', { method: 'POST', body: form });
+    const text = await res.text();
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(err.error || `HTTP ${res.status}`);
+      let msg = 'Server error ' + res.status;
+      try { msg = JSON.parse(text).error || msg; } catch(_) { msg = text.slice(0, 200) || msg; }
+      throw new Error(msg);
     }
-    resultData = await res.json();
-    renderWhenReady();
+
+    try {
+      resultData = JSON.parse(text);
+    } catch(_) {
+      throw new Error('Invalid response from server');
+    }
+
+    tryRender();
   } catch (e) {
     progressSection.style.display = 'none';
-    errorBox.textContent = `Analysis failed: ${e.message}`;
-    errorBox.style.display = 'block';
     analyzeBtn.disabled = false;
     analyzeBtn.textContent = 'Run TRST Analysis';
+    errorBox.textContent = 'Analysis failed: ' + e.message;
+    errorBox.style.display = 'block';
   }
 });
 
-function riskToBadge(risk) {
-  const map = {
-    low: ['badge-green','Low Risk'],
-    medium: ['badge-yellow','Medium Risk'],
-    high: ['badge-red','High Risk'],
-    not_found: ['badge-gray','Not Found'],
-    not_configured: ['badge-gray','Not Configured'],
-    unknown: ['badge-gray','Not Checked']
-  };
-  return map[risk] || map.unknown;
-}
-
-// --- Asset Type Banner ---
-function renderAssetType(metadata) {
-  const banner = document.getElementById('assetTypeBanner');
-  const icon = document.getElementById('assetTypeIcon');
-  const label = document.getElementById('assetTypeLabel');
-  const desc = document.getElementById('assetTypeDesc');
-
-  const assetType = metadata?.assetType;
-  if (!assetType || assetType === 'original') {
-    if (assetType === 'original') {
-      banner.style.display = 'flex';
-      banner.className = 'asset-type-banner original';
-      icon.textContent = '📷';
-      label.className = 'at-label at-original';
-      label.textContent = 'Original Capture';
-      desc.textContent = 'Camera EXIF signature detected — image appears to originate from a direct camera capture.';
-    } else {
-      banner.style.display = 'none';
-    }
-    return;
-  }
-
-  banner.style.display = 'flex';
-  if (assetType === 'screenshot_or_derived') {
-    banner.className = 'asset-type-banner screenshot';
-    icon.textContent = '🖼️';
-    label.className = 'at-label at-screenshot';
-    label.textContent = 'Screenshot or Social Repost — ';
-    desc.textContent = 'No EXIF data found. This image was likely screenshotted, cropped, or shared via social media. Low provenance does not mean fake content — origin simply cannot be verified.';
-  } else if (assetType === 'derived') {
-    banner.className = 'asset-type-banner derived';
-    icon.textContent = '📋';
-    label.className = 'at-label at-derived';
-    label.textContent = 'Derived Image — ';
-    desc.textContent = 'Minimal metadata, no camera signature. Image may have been re-exported, edited, or converted. Provenance is partial.';
-  }
-}
-
-// --- Capture Coherence Panel ---
-function renderCaptureCoherence(llm) {
-  const panel = document.getElementById('coherencePanel');
-  if (!llm || !llm.active || !llm.verdict) {
-    panel.style.display = 'none';
-    return;
-  }
-
-  panel.style.display = 'block';
-  const badge = document.getElementById('coherenceBadge');
-  const explanation = document.getElementById('coherenceExplanation');
-
-  const verdict = llm.verdict;
-  const flags = llm.flags || [];
-
-  // Coherence-relevant flag keywords
-  const coherenceFlags = flags.filter(f => {
-    const fl = f.toLowerCase();
-    return fl.includes('noise') || fl.includes('grain') || fl.includes('lighting') ||
-           fl.includes('shadow') || fl.includes('focus') || fl.includes('edge') ||
-           fl.includes('perspective') || fl.includes('color') || fl.includes('compress') ||
-           fl.includes('coherence') || fl.includes('consistent') || fl.includes('mismatch') ||
-           fl.includes('halo') || fl.includes('masking') || fl.includes('composit') ||
-           fl.includes('background') || fl.includes('lens');
-  });
-
-  let coherenceState, badgeText, summaryText;
-
-  if (verdict === 'authentic' || verdict === 'likely_authentic') {
-    coherenceState = 'coherent';
-    badgeText = 'Coherent';
-    summaryText = coherenceFlags.length > 0
-      ? `GPT-4o found the image consistent with a single photographic capture, though noted: ${coherenceFlags.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('; ')}.`
-      : 'GPT-4o found no signs of manipulation. Edges, noise, lighting, and depth of field appear consistent across the image.';
-  } else if (verdict === 'manipulated') {
-    coherenceState = 'incoherent';
-    badgeText = 'Incoherent';
-    summaryText = coherenceFlags.length > 0
-      ? `GPT-4o identified incoherence signals: ${coherenceFlags.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('; ')}. Elements appear to originate from different sources.`
-      : 'GPT-4o detected signs of manipulation — elements do not appear to originate from a single photographic capture.';
-  } else if (verdict === 'synthetic') {
-    coherenceState = 'incoherent';
-    badgeText = 'Not Applicable — Fully Synthetic';
-    summaryText = 'GPT-4o assessed this as a fully AI-generated image. Capture Coherence does not apply to synthetic content.';
-  } else if (verdict === 'likely_synthetic') {
-    coherenceState = 'partial';
-    badgeText = 'Uncertain — Likely Synthetic';
-    summaryText = 'GPT-4o found characteristics consistent with AI generation. Capture coherence is uncertain.';
-  } else {
-    coherenceState = 'uncertain';
-    badgeText = 'Uncertain';
-    summaryText = 'Insufficient forensic signals to assess capture coherence.';
-  }
-
-  badge.className = `coherence-badge ${coherenceState}`;
-  badge.textContent = badgeText;
-  explanation.textContent = summaryText;
-}
-
-function renderReport(data) {
-  progressSection.style.display = 'none';
-  lastReportData = data;
-
-  const score = data.trustScore;
-  const verdict = data.verdict;
-  const color = verdict.color || 'gray';
-
-  document.getElementById('scoreNum').textContent = score;
-  document.getElementById('scoreNum').className = `score-num ${color}`;
-  document.getElementById('verdictBar').textContent = `${verdict.label} — ${verdict.recommendation}`;
-  document.getElementById('verdictBar').className = `verdict-bar ${color}`;
-  document.getElementById('reportMeta').textContent = `${data.filename || 'Image'} · ${new Date(data.analyzedAt).toLocaleString()}`;
-  document.getElementById('reportTimestamp').textContent = `Analyzed ${new Date(data.analyzedAt).toLocaleString()}`;
-
-  const L = data.layers;
-
-  renderAssetType(L.metadata);
-  renderCaptureCoherence(L.llm);
-
-  const layerDefs = [
-    { key: 'c2pa',      num: 'Layer 1', name: 'C2PA Provenance',        detail: L.c2pa?.detail },
-    { key: 'metadata',  num: 'Layer 2', name: 'Metadata Forensics',     detail: L.metadata?.detail },
-    { key: 'origin',    num: 'Layer 3', name: 'Origin Tracing',         detail: L.origin?.detail },
-    { key: 'detection', num: 'Layer 4', name: 'AI Detection APIs',      detail: L.detection?.detail },
-    { key: 'llm',       num: 'Layer 5', name: 'LLM Consensus (GPT-4o)', detail: L.llm?.detail },
-    { key: 'context',   num: 'Layer 6', name: 'Context & Credibility',  detail: L.context?.detail },
-  ];
-
-  const container = document.getElementById('layersDetail');
-  container.innerHTML = layerDefs.map(ld => {
-    const risk = L[ld.key]?.risk || 'unknown';
-    const [badgeClass, badgeLabel] = riskToBadge(risk);
-    return `<div class="layer-row">
-      <div class="lr-num">${ld.num}</div>
-      <div class="lr-content">
-        <div class="lr-name">${ld.name}</div>
-        <div class="lr-detail">${ld.detail || '—'}</div>
-      </div>
-      <div class="lr-badge ${badgeClass}">${badgeLabel}</div>
-    </div>`;
-  }).join('');
-
-  reportSection.style.display = 'block';
-  reportActions.style.display = 'flex';
-  analyzeBtn.textContent = 'Run TRST Analysis';
-  reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// --- PDF Generation ---
-pdfBtn.addEventListener('click', () => {
-  if (!lastReportData) return;
-  generatePDF(lastReportData);
-});
+// ── PDF ───────────────────────────────────────────────────────────────────────
+pdfBtn.addEventListener('click', () => { if (lastReportData) generatePDF(lastReportData); });
 
 function generatePDF(data) {
   const { jsPDF } = window.jspdf;
@@ -459,130 +414,94 @@ function generatePDF(data) {
   const W = doc.internal.pageSize.getWidth();
   const score = data.trustScore;
   const verdict = data.verdict;
-  const L = data.layers;
-
-  // Color map
-  const colorMap = { green: [22,163,74], yellow: [202,138,4], orange: [234,88,12], red: [220,38,38], gray: [115,115,115] };
-  const vColor = colorMap[verdict.color] || colorMap.gray;
+  const L = data.layers || {};
 
   // Header
-  doc.setFillColor(10,10,10);
+  doc.setFillColor(10, 10, 10);
   doc.rect(0, 0, W, 80, 'F');
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(10); doc.setFont('helvetica','bold');
-  doc.text('TRST AUTHENTICITY REPORT', 40, 30);
-  doc.setFontSize(8); doc.setFont('helvetica','normal');
-  doc.setTextColor(163,163,163);
-  doc.text(`${data.filename || 'Image'} · ${new Date(data.analyzedAt).toLocaleString()}`, 40, 46);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('TRST AUTHENTICITY REPORT', 40, 35);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(163, 163, 163);
+  doc.text((data.filename || 'Image') + '  ·  ' + new Date(data.analyzedAt).toLocaleString(), 40, 55);
+  doc.text('trst.center', W - 40, 55, { align: 'right' });
 
   // Score
-  doc.setFontSize(36); doc.setFont('helvetica','bold');
-  doc.setTextColor(vColor[0], vColor[1], vColor[2]);
-  doc.text(String(score), W - 40, 48, { align: 'right' });
-  doc.setFontSize(7); doc.setFont('helvetica','normal');
-  doc.setTextColor(163,163,163);
-  doc.text('TRUST SCORE / 100', W - 40, 64, { align: 'right' });
+  doc.setTextColor(10, 10, 10);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(64);
+  doc.text(String(score), 40, 155);
+  doc.setFontSize(12);
+  doc.setTextColor(82, 82, 82);
+  doc.text('/ 100  TRUST SCORE', 40, 175);
 
   // Verdict bar
-  doc.setFillColor(vColor[0], vColor[1], vColor[2]);
-  doc.setGlobalAlpha ? null : null;
-  doc.setFillColor(
-    Math.min(255, vColor[0] + 180),
-    Math.min(255, vColor[1] + 180),
-    Math.min(255, vColor[2] + 180)
-  );
-  doc.rect(0, 80, W, 32, 'F');
-  doc.setTextColor(vColor[0], vColor[1], vColor[2]);
-  doc.setFontSize(9); doc.setFont('helvetica','bold');
-  doc.text(`${verdict.label} — ${verdict.recommendation}`, 40, 101);
+  const vColors = { green: [240,253,244], yellow: [254,252,232], orange: [255,247,237], red: [254,242,242] };
+  const vTextColors = { green: [21,128,61], yellow: [161,98,7], orange: [194,65,12], red: [185,28,28] };
+  const vc = vColors[verdict.color] || [245,245,245];
+  const vtc = vTextColors[verdict.color] || [82,82,82];
+  doc.setFillColor(...vc);
+  doc.rect(40, 190, W - 80, 36, 'F');
+  doc.setTextColor(...vtc);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.text(verdict.label + ' — ' + verdict.recommendation, 55, 213, { maxWidth: W - 110 });
 
-  // Layer table
-  let y = 138;
-  doc.setTextColor(100,100,100);
-  doc.setFontSize(7); doc.setFont('helvetica','bold');
-  doc.text('EVIDENCE BY LAYER', 40, y);
-  y += 16;
+  // Layers table
+  doc.setTextColor(163, 163, 163);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('EVIDENCE BY LAYER', 40, 255);
 
   const layerDefs = [
-    { key: 'c2pa',      num: 'Layer 1', name: 'C2PA Provenance' },
-    { key: 'metadata',  num: 'Layer 2', name: 'Metadata Forensics' },
-    { key: 'origin',    num: 'Layer 3', name: 'Origin Tracing' },
-    { key: 'detection', num: 'Layer 4', name: 'AI Detection APIs' },
-    { key: 'llm',       num: 'Layer 5', name: 'LLM Consensus (GPT-4o)' },
-    { key: 'context',   num: 'Layer 6', name: 'Context & Credibility' },
+    { num: 'Layer 1', name: 'C2PA Provenance',       key: 'c2pa' },
+    { num: 'Layer 2', name: 'Metadata Forensics',    key: 'metadata' },
+    { num: 'Layer 3', name: 'Origin Tracing',        key: 'origin' },
+    { num: 'Layer 4', name: 'AI Detection APIs',     key: 'detection' },
+    { num: 'Layer 5', name: 'LLM Consensus',         key: 'llm' },
+    { num: 'Layer 6', name: 'Context & Credibility', key: 'context' },
   ];
+  const riskColors = { low: [21,128,61], medium: [161,98,7], high: [185,28,28], unknown: [82,82,82] };
 
-  const badgeColorMap = {
-    'badge-green': [22,163,74], 'badge-yellow': [202,138,4],
-    'badge-orange': [234,88,12], 'badge-red': [220,38,38], 'badge-gray': [115,115,115]
-  };
-  const badgeBgMap = {
-    'badge-green': [240,253,244], 'badge-yellow': [254,252,232],
-    'badge-orange': [255,247,237], 'badge-red': [254,242,242], 'badge-gray': [245,245,245]
-  };
-
-  layerDefs.forEach((ld, idx) => {
-    const risk = L[ld.key]?.risk || 'unknown';
-    const detail = L[ld.key]?.detail || '—';
-    const [badgeClass, badgeLabel] = riskToBadge(risk);
-    const bColor = badgeColorMap[badgeClass] || [115,115,115];
-    const bBg = badgeBgMap[badgeClass] || [245,245,245];
-
-    if (idx % 2 === 0) {
-      doc.setFillColor(250,250,250);
-      doc.rect(0, y - 12, W, 52, 'F');
-    }
-
-    doc.setTextColor(100,100,100);
-    doc.setFontSize(7); doc.setFont('helvetica','bold');
-    doc.text(ld.num.toUpperCase(), 40, y);
-
-    doc.setTextColor(10,10,10);
-    doc.setFontSize(9); doc.setFont('helvetica','bold');
-    doc.text(ld.name, 110, y);
-
-    // Badge
-    const badgeW = doc.getTextWidth(badgeLabel) + 12;
-    doc.setFillColor(bBg[0], bBg[1], bBg[2]);
-    doc.roundedRect(W - 40 - badgeW, y - 10, badgeW, 14, 3, 3, 'F');
-    doc.setTextColor(bColor[0], bColor[1], bColor[2]);
-    doc.setFontSize(7); doc.setFont('helvetica','bold');
-    doc.text(badgeLabel, W - 40 - badgeW/2, y, { align: 'center' });
-
-    // Detail text (wrapped)
-    doc.setTextColor(80,80,80);
-    doc.setFontSize(8); doc.setFont('helvetica','normal');
-    const lines = doc.splitTextToSize(detail, W - 160);
-    doc.text(lines.slice(0,2), 110, y + 14);
-
-    y += 52;
+  let y = 270;
+  layerDefs.forEach(ld => {
+    const layer = L[ld.key] || {};
+    const risk = layer.risk || 'unknown';
+    const detail = layer.detail || '—';
+    doc.setFillColor(245, 245, 245);
+    doc.rect(40, y, W - 80, 44, 'F');
+    doc.setTextColor(10, 10, 10);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(ld.num.toUpperCase(), 52, y + 14);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(ld.name, 52, y + 28);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(82, 82, 82);
+    doc.text(detail, 52, y + 40, { maxWidth: W - 200 });
+    const rc = riskColors[risk] || riskColors.unknown;
+    doc.setTextColor(...rc);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(risk.replace('_', ' ').toUpperCase(), W - 50, y + 28, { align: 'right' });
+    y += 50;
   });
 
   // Footer
-  const footY = doc.internal.pageSize.getHeight() - 40;
-  doc.setFillColor(10,10,10);
-  doc.rect(0, footY, W, 40, 'F');
-  doc.setTextColor(163,163,163);
-  doc.setFontSize(7); doc.setFont('helvetica','normal');
-  doc.text(`Analyzed ${new Date(data.analyzedAt).toLocaleString()}`, 40, footY + 24);
-  doc.text('TRST.center', W - 40, footY + 24, { align: 'right' });
+  doc.setFillColor(10, 10, 10);
+  doc.rect(0, y + 20, W, 40, 'F');
+  doc.setTextColor(163, 163, 163);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text('Generated by TRST.center · ' + new Date().toLocaleString(), W / 2, y + 45, { align: 'center' });
 
-  const filename = `TRST_Report_${(data.filename || 'image').replace(/\.[^.]+$/, '')}_score${score}.pdf`;
-  doc.save(filename);
+  doc.save('TRST-Report-' + (data.filename || 'image').replace(/\.[^.]+$/, '') + '.pdf');
 }
-
-newBtn.addEventListener('click', () => {
-  selectedFile = null;
-  lastReportData = null;
-  fileInput.value = '';
-  previewBox.style.display = 'none';
-  previewImg.src = '';
-  reportSection.style.display = 'none';
-  reportActions.style.display = 'none';
-  analyzeBtn.disabled = true;
-  analyzeBtn.textContent = 'Run TRST Analysis';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
 </script>
 </body>
 </html>
