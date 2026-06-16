@@ -10,5 +10,16 @@
       "maxDuration": 30,
       "memory": 1024
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "x-vercel-max-request-body-size",
+          "value": "20mb"
+        }
+      ]
+    }
+  ]
 }
