@@ -112,7 +112,7 @@ async function checkDetection(filePath) {
     const blob = new Blob([imageBuffer], { type: mediaType });
     const form = new FormData();
     form.append("media", blob, path.basename(filePath));
-    form.append("models", "genai,manipulation");
+    form.append("models", "genai");
     form.append("api_user", user);
     form.append("api_secret", secret);
     const response = await fetch("https://api.sightengine.com/1.0/check.json", {
@@ -128,25 +128,13 @@ async function checkDetection(filePath) {
 
     // AI generation score (0–1)
     const aiScore = data?.type?.ai_generated ?? null;
-    // Manipulation score (0–1) — splicing, copy-move, pixel editing
-    const manipScore = data?.media?.manipulation ?? null;
 
-    // Determine risk from whichever signal is strongest
-    const maxScore = Math.max(aiScore ?? 0, manipScore ?? 0);
-    const risk = maxScore >= 0.7 ? "high" : maxScore >= 0.4 ? "medium" : "low";
-
-    // Determine primary threat type for the detail label
+    const risk = (aiScore ?? 0) >= 0.7 ? "high" : (aiScore ?? 0) >= 0.4 ? "medium" : "low";
     const aiPct = aiScore !== null ? Math.round(aiScore * 100) : null;
-    const manipPct = manipScore !== null ? Math.round(manipScore * 100) : null;
-    const parts = [];
-    if (aiPct !== null) parts.push(`${aiPct}% AI-generated`);
-    if (manipPct !== null) parts.push(`${manipPct}% manipulated`);
-    const detailStr = parts.length ? `Sightengine: ${parts.join(", ")}` : "Sightengine: no score returned";
+    const detailStr = aiPct !== null ? `Sightengine: ${aiPct}% AI-generated` : "Sightengine: no score returned";
 
-    // Threat type classification
-    let threatType = "none";
-    if ((manipScore ?? 0) >= 0.4 && (manipScore ?? 0) > (aiScore ?? 0)) threatType = "manipulated";
-    else if ((aiScore ?? 0) >= 0.4) threatType = "ai_generated";
+    // Threat type classification (manipulation detection requires Sightengine enterprise plan)
+    const threatType = (aiScore ?? 0) >= 0.4 ? "ai_generated" : "none";
 
     return {
       active: true,
@@ -155,12 +143,10 @@ async function checkDetection(filePath) {
       results: {
         sightengine: {
           ai_generated: aiScore,
-          manipulation: manipScore,
           ai_pct: aiPct,
-          manip_pct: manipPct,
         },
       },
-      avgScore: maxScore,
+      avgScore: aiScore,
       detail: detailStr,
     };
   } catch (e) {
