@@ -8,18 +8,8 @@
   "functions": {
     "api/analyze.js": {
       "maxDuration": 30,
-      "memory": 1024
+      "memory": 1024,
+      "maxLambdaSize": "50mb"
     }
-  },
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "x-vercel-max-request-body-size",
-          "value": "20mb"
-        }
-      ]
-    }
-  ]
+  }
 }
