@@ -109,6 +109,20 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .disclaimer p{font-size:.75rem;color:var(--gray-600);line-height:1.6}
 .disclaimer strong{color:var(--gray-800)}
 
+/* Score uncertainty note */
+.score-note{font-size:.6rem;color:#a3a3a3;margin-top:.2rem;line-height:1.3}
+
+/* Executive Summary */
+.exec-summary{padding:1.25rem 2rem;border-bottom:1px solid var(--gray-200);background:#f8fafc}
+.exec-summary-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-400);margin-bottom:.75rem}
+.exec-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.exec-item{background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:.65rem .85rem}
+.exec-item-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-400);margin-bottom:.2rem}
+.exec-item-value{font-size:.825rem;font-weight:600;color:var(--black);line-height:1.3}
+
+/* Methodology badge */
+.methodology-badge{font-size:.65rem;color:var(--gray-400);letter-spacing:.04em;margin-top:.25rem}
+
 /* Actions */
 .report-actions{display:none;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap}
 .pdf-btn,.new-btn{border:none;padding:.6rem 1.25rem;border-radius:6px;font-size:.875rem;font-weight:600;font-family:var(--font);cursor:pointer}
@@ -133,7 +147,7 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
     <img class="preview-img" id="previewImg" alt="Preview"/>
   </div>
 
-  <button class="analyze-btn" id="analyzeBtn" disabled>Run TRST Analysis</button>
+  <button class="analyze-btn" id="analyzeBtn" disabled>Request a TRST Assessment</button>
   <div class="error-box" id="errorBox"></div>
 
   <div class="progress-section" id="progressSection">
@@ -142,7 +156,7 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
       <div class="layer-item"><div class="layer-dot" id="dot-1"></div><div class="layer-name" id="lname-1">Layer 1 — C2PA Provenance</div></div>
       <div class="layer-item"><div class="layer-dot" id="dot-2"></div><div class="layer-name" id="lname-2">Layer 2 — Metadata Forensics</div></div>
       <div class="layer-item"><div class="layer-dot" id="dot-3"></div><div class="layer-name" id="lname-3">Layer 3 — Origin Tracing</div></div>
-      <div class="layer-item"><div class="layer-dot" id="dot-4"></div><div class="layer-name" id="lname-4">Layer 4 — AI Detection APIs</div></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-4"></div><div class="layer-name" id="lname-4">Layer 4 — AI Generation Signals</div></div>
       <div class="layer-item"><div class="layer-dot" id="dot-5"></div><div class="layer-name" id="lname-5">Layer 5 — Visual Forensic Analysis</div></div>
       <div class="layer-item"><div class="layer-dot" id="dot-6"></div><div class="layer-name" id="lname-6">Layer 6 — Context Analysis</div></div>
     </div>
@@ -157,9 +171,19 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
       <div class="score-block">
         <div class="score-num" id="scoreNum">—</div>
         <div class="score-label">Trust Score / 100</div>
+        <div class="score-note" id="scoreNote" style="display:none"></div>
       </div>
     </div>
     <div class="verdict-bar" id="verdictBar"></div>
+    <div class="exec-summary" id="execSummary" style="display:none">
+      <div class="exec-summary-title">Executive Summary</div>
+      <div class="exec-grid">
+        <div class="exec-item"><div class="exec-item-label">Overall Confidence</div><div class="exec-item-value" id="es-confidence">—</div></div>
+        <div class="exec-item"><div class="exec-item-label">Key Finding</div><div class="exec-item-value" id="es-finding">—</div></div>
+        <div class="exec-item"><div class="exec-item-label">Risk Level</div><div class="exec-item-value" id="es-risk">—</div></div>
+        <div class="exec-item"><div class="exec-item-label">Recommended Action</div><div class="exec-item-value" id="es-action">—</div></div>
+      </div>
+    </div>
     <div class="coherence-panel" id="coherencePanel">
       <div class="coherence-header">
         <span class="coherence-title">Capture Coherence</span>
@@ -174,6 +198,7 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
     </div>
     <div style="padding:1rem 2rem;border-top:1px solid var(--gray-200);background:var(--black);color:#a3a3a3;font-size:.75rem;text-align:center">
       TRST.center
+      <div class="methodology-badge">TRST Methodology v0.8</div>
     </div>
   </div>
 
@@ -183,8 +208,8 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
   </div>
 
   <div class="disclaimer">
-    <p><strong>Terms &amp; Limitations.</strong> TRST provides an informed assessment, not a certification of authenticity. Results are intended to support investigative, editorial, legal, and research workflows and should be considered alongside independent verification and professional judgment.</p>
-    <p style="margin-top:.6rem">By using this report, you acknowledge that TRST does not guarantee the authenticity, origin, or accuracy of any image and is not responsible for decisions, actions, or consequences arising from reliance on its findings. This report does not constitute legal, editorial, forensic, or professional advice.</p>
+    <p><strong>About TRST Analysis.</strong> TRST combines cryptographic provenance verification, multi-model AI detection, and visual forensic reasoning to produce a structured authenticity assessment. Results are designed to support investigative, editorial, legal, and research workflows — not to replace them.</p>
+    <p style="margin-top:.6rem">Each report reflects the evidence available at time of analysis. TRST does not certify authenticity; findings should be weighed alongside source knowledge, editorial judgment, and independent verification. This report does not constitute legal or forensic advice.</p>
   </div>
 </main>
 
@@ -323,8 +348,17 @@ function renderReport(data) {
   const verdict = data.verdict;
   const color   = verdict.color || 'gray';
 
-  document.getElementById('scoreNum').textContent = score;
+  const cappedScore = Math.min(score, 97);
+  document.getElementById('scoreNum').textContent = cappedScore;
   document.getElementById('scoreNum').className = 'score-num ' + color;
+  // Uncertainty note when score was capped
+  const scoreNoteEl = document.getElementById('scoreNote');
+  if (score >= 97) {
+    scoreNoteEl.textContent = 'Maximum displayed score is 97 — no analysis is fully certain.';
+    scoreNoteEl.style.display = 'block';
+  } else {
+    scoreNoteEl.style.display = 'none';
+  }
   // Soften "Suitable for publication" to avoid implying editorial approval
   let verdictText = verdict.recommendation || verdict.label;
   if (/suitable for publication/i.test(verdictText)) {
@@ -338,11 +372,41 @@ function renderReport(data) {
   const L = data.layers || {};
   renderCoherence(L.llm);
 
+  // ── Executive Summary ────────────────────────────────────────────────────────
+  (function() {
+    const es = document.getElementById('execSummary');
+    // Overall Confidence
+    document.getElementById('es-confidence').textContent = cappedScore + ' / 100';
+    // Key Finding — derive from LLM verdict or top-risk layer
+    const llm = L.llm || {};
+    let keyFinding = '—';
+    if (llm.verdict === 'authentic' || llm.verdict === 'likely_authentic') {
+      keyFinding = 'No significant manipulation signals detected';
+    } else if (llm.verdict === 'synthetic' || llm.verdict === 'likely_synthetic') {
+      keyFinding = 'AI generation characteristics identified';
+    } else if (llm.verdict === 'manipulated') {
+      keyFinding = 'Evidence of image manipulation found';
+    } else if (llm.flags && llm.flags.length) {
+      keyFinding = llm.flags[0][0].toUpperCase() + llm.flags[0].slice(1);
+    }
+    document.getElementById('es-finding').textContent = keyFinding;
+    // Risk Level — from verdict color
+    const riskMap = { green: 'Low', yellow: 'Medium', orange: 'High', red: 'Critical' };
+    document.getElementById('es-risk').textContent = (riskMap[color] || 'Undetermined') + ' Risk';
+    // Recommended Action
+    let recAction = verdict.recommendation || verdict.label || '—';
+    if (/suitable for publication/i.test(recAction)) {
+      recAction = 'Suitable for editorial use with standard verification';
+    }
+    document.getElementById('es-action').textContent = recAction;
+    es.style.display = 'block';
+  })();
+
   const layerDefs = [
     { num: 'Layer 1', name: 'C2PA Provenance',          key: 'c2pa' },
     { num: 'Layer 2', name: 'Metadata Forensics',       key: 'metadata' },
     { num: 'Layer 3', name: 'Origin Tracing',           key: 'origin' },
-    { num: 'Layer 4', name: 'AI Detection APIs',        key: 'detection' },
+    { num: 'Layer 4', name: 'AI Generation Signals',   key: 'detection' },
     { num: 'Layer 5', name: 'Visual Forensic Analysis', key: 'llm' },
     { num: 'Layer 6', name: 'Context & Credibility',    key: 'context' },
   ];
@@ -397,7 +461,7 @@ function renderReport(data) {
   reportSection.style.display = 'block';
   reportActions.style.display = 'flex';
   analyzeBtn.disabled = false;
-  analyzeBtn.textContent = 'Run TRST Analysis';
+  analyzeBtn.textContent = 'Request a TRST Assessment';
   reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -429,7 +493,7 @@ analyzeBtn.addEventListener('click', async () => {
     } catch (err) {
       progressSection.style.display = 'none';
       analyzeBtn.disabled = false;
-      analyzeBtn.textContent = 'Run TRST Analysis';
+      analyzeBtn.textContent = 'Request a TRST Assessment';
       errorBox.textContent = 'Display error: ' + err.message;
       errorBox.style.display = 'block';
     }
@@ -483,7 +547,7 @@ analyzeBtn.addEventListener('click', async () => {
   } catch (e) {
     progressSection.style.display = 'none';
     analyzeBtn.disabled = false;
-    analyzeBtn.textContent = 'Run TRST Analysis';
+    analyzeBtn.textContent = 'Request a TRST Assessment';
     errorBox.textContent = 'Analysis failed: ' + e.message;
     errorBox.style.display = 'block';
   }
@@ -496,7 +560,7 @@ function generatePDF(data) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const W = doc.internal.pageSize.getWidth();
-  const score = data.trustScore;
+  const score = Math.min(data.trustScore, 97);
   const verdict = data.verdict;
   const L = data.layers || {};
 
@@ -549,7 +613,7 @@ function generatePDF(data) {
     { num: 'Layer 1', name: 'C2PA Provenance',       key: 'c2pa' },
     { num: 'Layer 2', name: 'Metadata Forensics',    key: 'metadata' },
     { num: 'Layer 3', name: 'Origin Tracing',        key: 'origin' },
-    { num: 'Layer 4', name: 'AI Detection APIs',     key: 'detection' },
+    { num: 'Layer 4', name: 'AI Generation Signals', key: 'detection' },
     { num: 'Layer 5', name: 'Visual Forensic Analysis', key: 'llm' },
     { num: 'Layer 6', name: 'Context & Credibility', key: 'context' },
   ];
@@ -608,9 +672,9 @@ function generatePDF(data) {
   doc.setTextColor(163, 163, 163);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('Generated by TRST.center · ' + new Date().toLocaleString(), W / 2, y + 35, { align: 'center' });
+  doc.text('Generated by TRST.center  ·  TRST Methodology v0.8  ·  ' + new Date().toLocaleString(), W / 2, y + 35, { align: 'center' });
   doc.setFontSize(6.5);
-  doc.text('For informational purposes only. Score is based on cryptographic provenance, AI detection signals, and visual coherence reasoning. TRST does not certify authenticity and is not liable for any damages, publishing decisions, or legal consequences arising from reliance on this report.', W / 2, y + 50, { align: 'center', maxWidth: W - 80 });
+  doc.text('TRST combines cryptographic provenance, AI detection signals, and visual forensic reasoning to produce a structured authenticity assessment. Results support investigative and editorial workflows and should be weighed alongside source knowledge and professional judgment. This report does not constitute legal or forensic advice.', W / 2, y + 50, { align: 'center', maxWidth: W - 80 });
 
   doc.save('TRST-Report-' + (data.filename || 'image').replace(/\.[^.]+$/, '') + '.pdf');
 }
