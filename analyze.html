@@ -370,6 +370,16 @@ function renderReport(data) {
             '<div class="llm-reasoning-text" id="' + reasoningId + '">' + layer.reasoning + '</div>'
           : '');
     }
+    else if (ld.key === 'llm' && layer.detail) {
+      // Layer 5: no flags — strip "GPT-4o: verdict (X% confidence). " prefix
+      const cleanDetail = layer.detail.replace(/^GPT-4o:\s*\S+\s*\(\d+%\s*confidence\)\.\s*/i, '');
+      const reasoningId = 'llm-reasoning-' + Date.now();
+      detailHtml = '<div class="lr-detail">' + cleanDetail + '</div>' +
+        (layer.reasoning
+          ? '<button class="llm-reasoning-toggle" onclick="var el=document.getElementById(\'' + reasoningId + '\');el.classList.toggle(\'open\');this.textContent=el.classList.contains(\'open\')?\'Hide forensic reasoning ▲\':\'View forensic reasoning ▼\'">View forensic reasoning ▼</button>' +
+            '<div class="llm-reasoning-text" id="' + reasoningId + '">' + layer.reasoning + '</div>'
+          : '');
+    }
     else {
       detailHtml = '<div class="lr-detail">' + (layer.detail || '—') + '</div>';
     }
@@ -493,7 +503,7 @@ function generatePDF(data) {
   // Header
   doc.setFillColor(10, 10, 10);
   doc.rect(0, 0, W, 80, 'F');
-  doc.setTextColor(855, 255, 255);
+  doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.text('TRST AUTHENTICITY REPORT', 40, 35);
@@ -507,22 +517,27 @@ function generatePDF(data) {
   doc.setTextColor(10, 10, 10);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(64);
-  doc.text(String(score), 40, 155);
+  doc.text(String(score), 40, 148);
   doc.setFontSize(12);
   doc.setTextColor(82, 82, 82);
-  doc.text('/ 100  TRUST SCORE', 40, 175);
+  doc.text('/ 100  TRUST SCORE', 40, 166);
 
   // Verdict bar
   const vColors = { green: [240,253,244], yellow: [254,252,232], orange: [255,247,237], red: [254,242,242] };
   const vTextColors = { green: [21,128,61], yellow: [161,98,7], orange: [194,65,12], red: [185,28,28] };
   const vc = vColors[verdict.color] || [245,245,245];
   const vtc = vTextColors[verdict.color] || [82,82,82];
+  // Soften "Suitable for publication" in PDF too
+  let pdfVerdictText = verdict.recommendation || verdict.label;
+  if (/suitable for publication/i.test(pdfVerdictText)) {
+    pdfVerdictText = 'Strong authenticity signals detected. No significant evidence of manipulation was found during analysis.';
+  }
   doc.setFillColor(...vc);
-  doc.rect(40, 190, W - 80, 36, 'F');
+  doc.rect(40, 188, W - 80, 36, 'F');
   doc.setTextColor(...vtc);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text(verdict.label + ' — ' + verdict.recommendation, 55, 213, { maxWidth: W - 110 });
+  doc.text(verdict.label + ' — ' + pdfVerdictText, 55, 210, { maxWidth: W - 110 });
 
   // Layers table
   doc.setTextColor(163, 163, 163);
@@ -552,6 +567,9 @@ function generatePDF(data) {
     } else if (ld.key === 'llm' && layer.flags && layer.flags.length) {
       // Layer 5: use bullet-style findings list instead of raw paragraph
       detail = layer.flags.map(f => '• ' + f[0].toUpperCase() + f.slice(1)).join(', ');
+    } else if (ld.key === 'llm' && layer.detail) {
+      // Layer 5: no flags — strip the "GPT-4o: verdict (X% confidence). " prefix
+      detail = layer.detail.replace(/^GPT-4o:\s*\S+\s*\(\d+%\s*confidence\)\.\s*/i, '');
     } else {
       detail = layer.detail || '—';
     }
