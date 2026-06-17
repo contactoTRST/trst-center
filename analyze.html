@@ -493,7 +493,7 @@ function generatePDF(data) {
   // Header
   doc.setFillColor(10, 10, 10);
   doc.rect(0, 0, W, 80, 'F');
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(855, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
   doc.text('TRST AUTHENTICITY REPORT', 40, 35);
@@ -551,7 +551,7 @@ function generatePDF(data) {
       detail = 'No provenance certificate present. This is common for most images today and should not be interpreted as evidence of manipulation.';
     } else if (ld.key === 'llm' && layer.flags && layer.flags.length) {
       // Layer 5: use bullet-style findings list instead of raw paragraph
-      detail = layer.flags.map(f => '✓ ' + f[0].toUpperCase() + f.slice(1)).join('   ');
+      detail = layer.flags.map(f => '• ' + f[0].toUpperCase() + f.slice(1)).join(', ');
     } else {
       detail = layer.detail || '—';
     }
@@ -559,7 +559,7 @@ function generatePDF(data) {
     // Measure wrapped text height to make row dynamic
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    const maxDetailW = W - 200;
+    const maxDetailW = W - 140;
     const wrappedLines = doc.splitTextToSize(detail, maxDetailW);
     const detailHeight = wrappedLines.length * 10;
     const rowHeight = Math.max(44, 14 + 14 + detailHeight + 8); // num + name + detail + padding
@@ -575,7 +575,7 @@ function generatePDF(data) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 82);
-    doc.text(wrappedLines, 52, y + 38);
+    doc.text(wrappedLines, 52, y + 38, { maxWidth: maxDetailW });
     const rc = riskColors[risk] || riskColors.unknown;
     doc.setTextColor(...rc);
     doc.setFont('helvetica', 'bold');
