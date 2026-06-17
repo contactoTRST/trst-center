@@ -379,7 +379,27 @@ analyzeBtn.addEventListener('click', async () => {
 
   try {
     const form = new FormData();
-    form.append('image', selectedFile);
+    const fileToSend = await (async (file) => {
+      const MAX_PX = 2048, QUALITY = 0.82, MAX_BYTES = 3.5 * 1024 * 1024;
+      if (file.size <= MAX_BYTES) return file;
+      return new Promise(resolve => {
+        const img = new Image(), url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          let w = img.width, h = img.height;
+          if (w > MAX_PX || h > MAX_PX) {
+            if (w > h) { h = Math.round(h * MAX_PX / w); w = MAX_PX; }
+            else { w = Math.round(w * MAX_PX / h); h = MAX_PX; }
+          }
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          c.toBlob(b => resolve(new File([b], file.name.replace(/\.[^.]+$/, '.jpg'), {type:'image/jpeg'})), 'image/jpeg', QUALITY);
+        };
+        img.src = url;
+      });
+    })(selectedFile);
+    form.append('image', fileToSend);
     const res = await fetch('/api/analyze', { method: 'POST', body: form });
     const text = await res.text();
 
