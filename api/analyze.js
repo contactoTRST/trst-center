@@ -62,17 +62,72 @@ async function checkMetadata(filePath) {
 }
 
 
-async function checkOrigin() {
-  return {
-    active: false,
-    risk: "not_configured",
-    earliest_source: null,
-    sources_found: 0,
-    detail: "Origin tracing not yet configured",
-  };
+async function checkOrigin(filePath) {
+  const apiKey = process.env.GOOGLE_VISION_API_KEY;
+  if (!apiKey) return { active: false, risk: "not_configured", detail: "Origin tracing not configured — set GOOGLE_VISION_API_KEY" };
+
+  try {
+    const fs = await import("fs");
+    const imageBytes = fs.readFileSync(filePath).toString("base64");
+
+    const body = {
+      requests: [{
+        image: { content: imageBytes },
+        features: [{ type: "WEB_DETECTION", maxResults: 10 }]
+      }]
+    };
+
+    const r = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    if (!r.ok) {
+      const err = await r.text();
+      return { active: true, risk: "medium", flags: ["api_error"], detail: "Vision API error: " + err.slice(0, 200) };
+    }
+
+    const data = await r.json();
+    const web = data.responses?.[0]?.webDetection;
+
+    if (!web) return { active: true, risk: "low", flags: [], matches: [], detail: "No web matches found" };
+
+    const fullMatches = web.fullMatchingImages || [];
+    const partialMatches = web.partialMatchingImages || [];
+    const pages = web.pagesWithMatchingImages || [];
+    const entities = (web.webEntities || []).filter(e => e.score > 0.5).map(e => e.description).filter(Boolean);
+
+    const totalMatches = fullMatches.length + partialMatches.length;
+    const flags = [];
+
+    if (fullMatches.length > 0) flags.push("exact_copies_found_online");
+    if (partialMatches.length > 0) flags.push("partial_matches_found_online");
+    if (pages.length > 0) flags.push("appears_on_web_pages");
+
+    // Risk: if exact copies found on many sites = potentially viral/stolen, not necessarily fake
+    // High risk if image appears on known fact-check or disinformation sites
+    const risk = fullMatches.length > 5 ? "medium" : flags.length > 0 ? "low" : "low";
+
+    const topPages = pages.slice(0, 3).map(p => p.url);
+
+    return {
+      active: true,
+      risk,
+      flags,
+      matches: { full: fullMatches.length, partial: partialMatches.length, pages: pages.length },
+      entities,
+      topPages,
+      detail: totalMatches > 0
+        ? `Found ${fullMatches.length} exact + ${partialMatches.length} partial matches across ${pages.length} pages`
+        : "No prior web appearances found — image may be original"
+    };
+  } catch (err) {
+    return { active: true, risk: "medium", flags: ["extraction_error"], detail: "Origin check failed: " + err.message };
+  }
 }
 
-// ─── LAYER 4: AI Detection (Sightengine) ─────────────────────────────────────
+
 async function checkDetection(filePath) {
   const user = process.env.SIGHTENGINE_USER;
   const secret = process.env.SIGHTENGINE_SECRET;
