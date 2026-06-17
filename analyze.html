@@ -205,7 +205,7 @@ let lastReportData = null;
 
 // ── File selection ────────────────────────────────────────────────────────────
 function handleFile(file) {
-  if (!file || !file.type.startsWith('image/')) return;
+  if (!file || (file.type && !file.type.startsWith('image/'))) return;
   selectedFile = file;
   const url = URL.createObjectURL(file);
   previewImg.src = url;
@@ -215,6 +215,7 @@ function handleFile(file) {
 }
 
 fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+uploadZone.addEventListener('click', (e) => { if (e.target !== fileInput) fileInput.click(); });
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
 uploadZone.addEventListener('drop', e => {
@@ -270,7 +271,7 @@ function riskBadge(risk) {
   return map[risk] || map.unknown;
 }
 
-// ── Capture Chereence ─────────────────────────────────────────────────────────
+// ── Capture Coherence ─────────────────────────────────────────────────────────
 function renderCoherence(llm) {
   const panel = document.getElementById('coherencePanel');
   if (!llm || !llm.active || !llm.verdict) { panel.style.display = 'none'; return; }
@@ -477,7 +478,7 @@ analyzeBtn.addEventListener('click', async () => {
   }
 });
 
-// ── PDF ───────────────────────────────────────────────────────────────────
+// ── PDF ───────────────────────────────────────────────────────────────────────
 pdfBtn.addEventListener('click', () => { if (lastReportData) generatePDF(lastReportData); });
 
 function generatePDF(data) {
@@ -511,7 +512,6 @@ function generatePDF(data) {
   doc.text('/ 100  TRUST SCORE', 40, 175);
 
   // Verdict bar
-  const vCb
   const vColors = { green: [240,253,244], yellow: [254,252,232], orange: [255,247,237], red: [254,242,242] };
   const vTextColors = { green: [21,128,61], yellow: [161,98,7], orange: [194,65,12], red: [185,28,28] };
   const vc = vColors[verdict.color] || [245,245,245];
