@@ -143,7 +143,7 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
       <div class="layer-item"><div class="layer-dot" id="dot-2"></div><div class="layer-name" id="lname-2">Layer 2 — Metadata Forensics</div></div>
       <div class="layer-item"><div class="layer-dot" id="dot-3"></div><div class="layer-name" id="lname-3">Layer 3 — Origin Tracing</div></div>
       <div class="layer-item"><div class="layer-dot" id="dot-4"></div><div class="layer-name" id="lname-4">Layer 4 — AI Detection APIs</div></div>
-      <div class="layer-item"><div class="layer-dot" id="dot-5"></div><div class="layer-name" id="lname-5">Layer 5 — LLM Consensus</div></div>
+      <div class="layer-item"><div class="layer-dot" id="dot-5"></div><div class="layer-name" id="lname-5">Layer 5 — Visual Forensic Analysis</div></div>
       <div class="layer-item"><div class="layer-dot" id="dot-6"></div><div class="layer-name" id="lname-6">Layer 6 — Context Analysis</div></div>
     </div>
   </div>
@@ -183,7 +183,8 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
   </div>
 
   <div class="disclaimer">
-    <p><strong>Terms &amp; Conditions.</strong> The TRST score is generated through automated analysis of three signal categories: <strong>(1) cryptographic provenance &amp; metadata forensics</strong> (C2PA certificates, EXIF integrity, and origin tracing), <strong>(2) AI &amp; manipulation detection</strong> (third-party AI-generation classifiers and pixel-level forensic signals), and <strong>(3) visual coherence reasoning</strong> (large language model assessment of lighting, noise, edges, and scene consistency). Results are provided for informational and investigative support purposes only and do not represent a definitive finding of authenticity or inauthenticity. <strong>TRST is not liable for any damages, losses, reputational harm, legal consequences, publishing decisions, or editorial judgments</strong> arising from reliance on this report. TRST does not certify, endorse, or guarantee the authenticity of any image, and this report does not constitute legal, editorial, or professional advice. All results should be independently verified by a qualified professional before being relied upon.</p>
+    <p><strong>Terms &amp; Limitations.</strong> TRST provides an informed assessment, not a certification of authenticity. Results are intended to support investigative, editorial, legal, and research workflows and should be considered alongside independent verification and professional judgment.</p>
+    <p style="margin-top:.6rem">By using this report, you acknowledge that TRST does not guarantee the authenticity, origin, or accuracy of any image and is not responsible for decisions, actions, or consequences arising from reliance on its findings. This report does not constitute legal, editorial, forensic, or professional advice.</p>
   </div>
 </main>
 
@@ -543,26 +544,44 @@ function generatePDF(data) {
   layerDefs.forEach(ld => {
     const layer = L[ld.key] || {};
     const risk = layer.risk || 'unknown';
-    const detail = layer.detail || '—';
+
+    // C2PA: use neutral wording in PDF too
+    let detail;
+    if (ld.key === 'c2pa' && risk === 'not_found') {
+      detail = 'No provenance certificate present. This is common for most images today and should not be interpreted as evidence of manipulation.';
+    } else if (ld.key === 'llm' && layer.flags && layer.flags.length) {
+      // Layer 5: use bullet-style findings list instead of raw paragraph
+      detail = layer.flags.map(f => '✓ ' + f[0].toUpperCase() + f.slice(1)).join('   ');
+    } else {
+      detail = layer.detail || '—';
+    }
+
+    // Measure wrapped text height to make row dynamic
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const maxDetailW = W - 200;
+    const wrappedLines = doc.splitTextToSize(detail, maxDetailW);
+    const detailHeight = wrappedLines.length * 10;
+    const rowHeight = Math.max(44, 14 + 14 + detailHeight + 8); // num + name + detail + padding
+
     doc.setFillColor(245, 245, 245);
-    doc.rect(40, y, W - 80, 44, 'F');
+    doc.rect(40, y, W - 80, rowHeight, 'F');
     doc.setTextColor(10, 10, 10);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.text(ld.num.toUpperCase(), 52, y + 14);
-    doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text(ld.name, 52, y + 28);
+    doc.text(ld.name, 52, y + 26);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 82);
-    doc.text(detail, 52, y + 40, { maxWidth: W - 200 });
+    doc.text(wrappedLines, 52, y + 38);
     const rc = riskColors[risk] || riskColors.unknown;
     doc.setTextColor(...rc);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.text(risk.replace('_', ' ').toUpperCase(), W - 50, y + 28, { align: 'right' });
-    y += 50;
+    doc.text(risk.replace(/_/g, ' ').toUpperCase(), W - 50, y + 26, { align: 'right' });
+    y += rowHeight + 6;
   });
 
   // Footer
