@@ -39,7 +39,7 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 
 /* Progress */
 .progress-section{display:none;margin-top:2rem}
-.progress-title{font-size:.9rfm;font-weight:600;color:var(--gray-600);margin-bottom:1rem}
+.progress-title{font-size:.9rem;font-weight:600;color:var(--gray-600);margin-bottom:1rem}
 .layer-progress{display:flex;flex-direction:column;gap:.75rem}
 .layer-item{display:flex;align-items:center;gap:.75rem;font-size:.875rem}
 .layer-dot{width:10px;height:10px;border-radius:50%;background:var(--gray-200);flex-shrink:0;transition:background .3s}
@@ -93,6 +93,21 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
 .badge-orange{background:#fff7ed;color:#c2410c}
 .badge-red{background:#fef2f2;color:#b91c1c}
 .badge-gray{background:var(--gray-100);color:var(--gray-600)}
+
+/* Layer 5 checklist */
+.llm-checklist{list-style:none;margin:.4rem 0 0;display:flex;flex-direction:column;gap:.25rem}
+.llm-checklist li{font-size:.8rem;color:var(--gray-600);display:flex;align-items:flex-start;gap:.4rem;line-height:1.4}
+.llm-checklist li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:.05rem}
+.llm-checklist li.flag::before{content:'⚠';color:var(--orange)}
+.llm-reasoning-toggle{font-size:.75rem;color:var(--accent);cursor:pointer;background:none;border:none;font-family:var(--font);padding:0;margin-top:.5rem;display:inline-block}
+.llm-reasoning-toggle:hover{text-decoration:underline}
+.llm-reasoning-text{display:none;font-size:.78rem;color:var(--gray-600);line-height:1.55;margin-top:.4rem;padding:.6rem .75rem;background:var(--gray-100);border-radius:6px;font-style:italic}
+.llm-reasoning-text.open{display:block}
+
+/* Disclaimer */
+.disclaimer{margin-top:2rem;padding:1rem 1.25rem;background:var(--gray-100);border-radius:8px;border-left:3px solid var(--gray-200)}
+.disclaimer p{font-size:.75rem;color:var(--gray-600);line-height:1.6}
+.disclaimer strong{color:var(--gray-800)}
 
 /* Actions */
 .report-actions{display:none;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap}
@@ -165,6 +180,10 @@ h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem}
   <div class="report-actions" id="reportActions">
     <button class="pdf-btn" id="pdfBtn">Download PDF Report</button>
     <button class="new-btn" id="newBtn">Analyze Another Image</button>
+  </div>
+
+  <div class="disclaimer">
+    <p><strong>Terms &amp; Conditions.</strong> The TRST score is generated through automated analysis of three signal categories: <strong>(1) cryptographic provenance &amp; metadata forensics</strong> (C2PA certificates, EXIF integrity, and origin tracing), <strong>(2) AI &amp; manipulation detection</strong> (third-party AI-generation classifiers and pixel-level forensic signals), and <strong>(3) visual coherence reasoning</strong> (large language model assessment of lighting, noise, edges, and scene consistency). Results are provided for informational and investigative support purposes only and do not represent a definitive finding of authenticity or inauthenticity. <strong>TRST is not liable for any damages, losses, reputational harm, legal consequences, publishing decisions, or editorial judgments</strong> arising from reliance on this report. TRST does not certify, endorse, or guarantee the authenticity of any image, and this report does not constitute legal, editorial, or professional advice. All results should be independently verified by a qualified professional before being relied upon.</p>
   </div>
 </main>
 
@@ -304,7 +323,12 @@ function renderReport(data) {
 
   document.getElementById('scoreNum').textContent = score;
   document.getElementById('scoreNum').className = 'score-num ' + color;
-  document.getElementById('verdictBar').textContent = verdict.label + ' — ' + verdict.recommendation;
+  // Soften "Suitable for publication" to avoid implying editorial approval
+  let verdictText = verdict.recommendation || verdict.label;
+  if (/suitable for publication/i.test(verdictText)) {
+    verdictText = 'Strong authenticity signals detected. No significant evidence of manipulation was found during analysis.';
+  }
+  document.getElementById('verdictBar').textContent = verdict.label + ' — ' + verdictText;
   document.getElementById('verdictBar').className = 'verdict-bar ' + color;
   document.getElementById('reportMeta').textContent =
     (data.filename || 'Image') + ' · ' + new Date(data.analyzedAt).toLocaleString();
@@ -313,22 +337,46 @@ function renderReport(data) {
   renderCoherence(L.llm);
 
   const layerDefs = [
-    { num: 'Layer 1', name: 'C2PA Provenance',        key: 'c2pa' },
-    { num: 'Layer 2', name: 'Metadata Forensics',     key: 'metadata' },
-    { num: 'Layer 3', name: 'Origin Tracing',         key: 'origin' },
-    { num: 'Layer 4', name: 'AI Detection APIs',      key: 'detection' },
-    { num: 'Layer 5', name: 'LLM Consensus',          key: 'llm' },
-    { num: 'Layer 6', name: 'Context & Credibility',  key: 'context' },
+    { num: 'Layer 1', name: 'C2PA Provenance',          key: 'c2pa' },
+    { num: 'Layer 2', name: 'Metadata Forensics',       key: 'metadata' },
+    { num: 'Layer 3', name: 'Origin Tracing',           key: 'origin' },
+    { num: 'Layer 4', name: 'AI Detection APIs',        key: 'detection' },
+    { num: 'Layer 5', name: 'Visual Forensic Analysis', key: 'llm' },
+    { num: 'Layer 6', name: 'Context & Credibility',    key: 'context' },
   ];
 
   document.getElementById('layersDetail').innerHTML = layerDefs.map(ld => {
     const layer = L[ld.key] || {};
     const [cls, label] = riskBadge(layer.risk || 'unknown');
+
+    // C2PA: neutral wording when not found
+    let detailHtml;
+    if (ld.key === 'c2pa' && layer.risk === 'not_found') {
+      detailHtml = '<div class="lr-detail">No provenance certificate present. This is common for most images today and should not be interpreted as evidence of manipulation.</div>';
+    }
+    // Layer 5: convert flags + reasoning into checklist
+    else if (ld.key === 'llm' && layer.active && layer.flags && layer.flags.length) {
+      const isGood = ['authentic','likely_authentic'].includes(layer.verdict);
+      const items = layer.flags.map(f =>
+        '<li class="' + (isGood ? '' : 'flag') + '">' + f[0].toUpperCase() + f.slice(1) + '</li>'
+      ).join('');
+      const reasoningId = 'llm-reasoning-' + Date.now();
+      detailHtml =
+        '<ul class="llm-checklist">' + items + '</ul>' +
+        (layer.reasoning
+          ? '<button class="llm-reasoning-toggle" onclick="var el=document.getElementById(\'' + reasoningId + '\');el.classList.toggle(\'open\');this.textContent=el.classList.contains(\'open\')?\'Hide forensic reasoning ▲\':\'View forensic reasoning ▼\'">View forensic reasoning ▼</button>' +
+            '<div class="llm-reasoning-text" id="' + reasoningId + '">' + layer.reasoning + '</div>'
+          : '');
+    }
+    else {
+      detailHtml = '<div class="lr-detail">' + (layer.detail || '—') + '</div>';
+    }
+
     return '<div class="layer-row">' +
       '<div class="lr-num">' + ld.num + '</div>' +
       '<div class="lr-content">' +
         '<div class="lr-name">' + ld.name + '</div>' +
-        '<div class="lr-detail">' + (layer.detail || '—') + '</div>' +
+        detailHtml +
       '</div>' +
       '<div class="lr-badge ' + cls + '">' + label + '</div>' +
     '</div>';
@@ -379,27 +427,7 @@ analyzeBtn.addEventListener('click', async () => {
 
   try {
     const form = new FormData();
-    const fileToSend = await (async (file) => {
-      const MAX_PX = 2048, QUALITY = 0.82, MAX_BYTES = 3.5 * 1024 * 1024;
-      if (file.size <= MAX_BYTES) return file;
-      return new Promise(resolve => {
-        const img = new Image(), url = URL.createObjectURL(file);
-        img.onload = () => {
-          URL.revokeObjectURL(url);
-          let w = img.width, h = img.height;
-          if (w > MAX_PX || h > MAX_PX) {
-            if (w > h) { h = Math.round(h * MAX_PX / w); w = MAX_PX; }
-            else { w = Math.round(w * MAX_PX / h); h = MAX_PX; }
-          }
-          const c = document.createElement('canvas');
-          c.width = w; c.height = h;
-          c.getContext('2d').drawImage(img, 0, 0, w, h);
-          c.toBlob(b => resolve(new File([b], file.name.replace(/\.[^.]+$/, '.jpg'), {type:'image/jpeg'})), 'image/jpeg', QUALITY);
-        };
-        img.src = url;
-      });
-    })(selectedFile);
-    form.append('image', fileToSend);
+    form.append('image', selectedFile);
     const res = await fetch('/api/analyze', { method: 'POST', body: form });
     const text = await res.text();
 
@@ -481,7 +509,7 @@ function generatePDF(data) {
     { num: 'Layer 2', name: 'Metadata Forensics',    key: 'metadata' },
     { num: 'Layer 3', name: 'Origin Tracing',        key: 'origin' },
     { num: 'Layer 4', name: 'AI Detection APIs',     key: 'detection' },
-    { num: 'Layer 5', name: 'LLM Consensus',         key: 'llm' },
+    { num: 'Layer 5', name: 'Visual Forensic Analysis', key: 'llm' },
     { num: 'Layer 6', name: 'Context & Credibility', key: 'context' },
   ];
   const riskColors = { low: [21,128,61], medium: [161,98,7], high: [185,28,28], unknown: [82,82,82] };
@@ -518,7 +546,9 @@ function generatePDF(data) {
   doc.setTextColor(163, 163, 163);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('Generated by TRST.center · ' + new Date().toLocaleString(), W / 2, y + 45, { align: 'center' });
+  doc.text('Generated by TRST.center · ' + new Date().toLocaleString(), W / 2, y + 35, { align: 'center' });
+  doc.setFontSize(6.5);
+  doc.text('For informational purposes only. Score is based on cryptographic provenance, AI detection signals, and visual coherence reasoning. TRST does not certify authenticity and is not liable for any damages, publishing decisions, or legal consequences arising from reliance on this report.', W / 2, y + 50, { align: 'center', maxWidth: W - 80 });
 
   doc.save('TRST-Report-' + (data.filename || 'image').replace(/\.[^.]+$/, '') + '.pdf');
 }
