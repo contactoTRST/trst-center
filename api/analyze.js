@@ -21,68 +21,47 @@ async function checkC2PA(filePath) {
 // ─── LAYER 2: Metadata Forensics ─────────────────────────────────────────────
 async function checkMetadata(filePath) {
   try {
-    const { execSync } = await import("child_process");
-    const raw = execSync(`exiftool -json -a -u "${filePath}" 2>/dev/null`, { timeout: 8000 });
-    const data = JSON.parse(raw.toString())[0] || {};
+    const exifr = await import("exifr");
+    const parse = exifr.parse ?? exifr.default?.parse ?? exifr.default;
+    const tags = await parse(filePath, { tiff: true, exif: true, gps: true, icc: true, iptc: true, xmp: true, translateValues: false, reviveValues: false }).catch(() => null);
+
+    if (!tags || Object.keys(tags).length === 0) {
+      return { active: true, risk: "medium", flags: ["missing_exif"], info: {}, fieldCount: 0, assetType: "unknown", detail: "No EXIF metadata found — may indicate stripping or AI generation" };
+    }
+
     const flags = [];
     const info = {};
-    if (data.Make || data.Model) {
-      info.camera = `${data.Make || ""} ${data.Model || ""}`.trim();
-    } else {
-      flags.push("No camera make/model");
-    }
-    if (data.GPSLatitude) {
-      info.gps = `${data.GPSLatitude}, ${data.GPSLongitude}`;
-    }
-    if (data.DateTimeOriginal) {
-      info.timestamp = data.DateTimeOriginal;
-    } else {
-      flags.push("No original timestamp");
-    }
-    if (data.Software) {
-      info.software = data.Software;
-      const aiTools = ["adobe firefly", "midjourney", "dall-e", "stable diffusion", "gemini", "openai", "generative"];
-      if (aiTools.some(t => data.Software.toLowerCase().includes(t))) {
-        flags.push(`AI tool detected in Software field: ${data.Software}`);
-      }
-    } else {
-      flags.push("Software field absent");
-    }
-    const fieldCount = Object.keys(data).length;
-    if (fieldCount < 5) {
-      flags.push("EXIF data appears stripped or minimal");
-    }
+    const fieldCount = Object.keys(tags).length;
+
+    if (tags.Make) info.make = tags.Make;
+    if (tags.Model) info.model = tags.Model;
+    if (!tags.Make && !tags.Model) flags.push("missing_camera");
+
+    if (tags.DateTimeOriginal) info.dateTimeOriginal = tags.DateTimeOriginal;
+    else if (tags.DateTime) info.dateTimeOriginal = tags.DateTime;
+    else flags.push("missing_timestamp");
+
+    if (tags.GPSLatitude) info.gps = true;
+
+    const software = tags.Software || tags.CreatorTool || tags.ProcessingSoftware || "";
+    if (software) info.software = software;
+    const aiTools = ["midjourney", "stable diffusion", "dall-e", "firefly", "imagen", "gemini", "ideogram", "leonardo", "runway", "pika", "kling", "adobe generative", "generative fill"];
+    if (aiTools.some(t => software.toLowerCase().includes(t))) flags.push("ai_tool_in_software");
 
     let assetType = "original";
-    if (fieldCount === 0 && !data.Make && !data.Model) {
-      assetType = "screenshot_or_derived";
-      flags.push("No EXIF data — likely a screenshot, crop, or social media repost");
-    } else if (fieldCount < 3 && !data.Make && !data.Model) {
-      assetType = "derived";
-    }
+    if (flags.includes("ai_tool_in_software")) assetType = "derived";
+    else if (flags.includes("missing_camera") && flags.includes("missing_timestamp")) assetType = "screenshot_or_derived";
+    else if (fieldCount < 3) assetType = "screenshot_or_derived";
 
-    const risk = flags.length >= 2 ? "high" : flags.length === 1 ? "medium" : "low";
-    return {
-      active: true,
-      risk,
-      flags,
-      info,
-      fieldCount,
-      assetType,
-      detail: flags.length ? flags.join(". ") : "Metadata appears intact",
-    };
-  } catch (e) {
-    return {
-      active: false,
-      risk: "not_found",
-      flags: [],
-      info: {},
-      detail: `Metadata extraction failed: ${e.message}`,
-    };
+    const risk = flags.includes("ai_tool_in_software") ? "high" : flags.length >= 2 ? "medium" : "low";
+
+    return { active: true, risk, flags, info, fieldCount, assetType, detail: flags.length ? `Flags: ${flags.join(", ")}` : "Metadata appears normal" };
+  } catch (err) {
+    return { active: true, risk: "medium", flags: ["extraction_error"], info: {}, fieldCount: 0, assetType: "unknown", detail: "Metadata extraction failed: " + err.message };
   }
 }
 
-// ─── LAYER 3: Origin Tracing ──────────────────────────────────────────────────
+
 async function checkOrigin() {
   return {
     active: false,
