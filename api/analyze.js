@@ -380,7 +380,7 @@ export default async function handler(req, res) {
         filename: file.originalFilename,
       });
     }
-    const [metadata, origin] = await Promise.all([checkMetadata(filePath), checkOrigin()]);
+    const [metadata, origin] = await Promise.all([checkMetadata(filePath), checkOrigin(filePath)]);
     const detection = await checkDetection(filePath);
     const llm = await checkLLMConsensus(filePath, metadata, detection);
     const context = await checkContext(file.originalFilename);
